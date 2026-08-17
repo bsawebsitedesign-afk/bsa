@@ -70,9 +70,11 @@ export default async function DashboardPage({
   const deniedAdmin = firstParam(searchParams?.denied) === 'admin';
   const initialTab = pickTab(searchParams?.tab);
 
-  const user = await prisma.user.findUnique({
-    where: { id: session.userId },
-    select: {
+  let user: any = null;
+  try {
+    user = await prisma.user.findUnique({
+      where: { id: session.userId },
+      select: {
       id: true,
       email: true,
       role: true,
@@ -188,13 +190,15 @@ export default async function DashboardPage({
               type: true,
               locationType: true,
               location: true,
-              deadline: true,
             },
           },
         },
       },
     },
   });
+  } catch (err) {
+    console.error('Dashboard User DB Error:', err);
+  }
 
   const profile = user?.profile;
   if (!user || !profile) {
@@ -202,60 +206,73 @@ export default async function DashboardPage({
     redirect('/login');
   }
 
-  const [resources, totalModules, upcomingEvents, chapters] = await Promise.all([
-    prisma.resource.findMany({
-      where: { isPublished: true },
-      orderBy: { sortOrder: 'asc' },
-      select: {
-        slug: true,
-        title: true,
-        summary: true,
-        emoji: true,
-        level: true,
-        estHours: true,
-        _count: { select: { modules: true } },
-      },
-    }),
-    prisma.resourceModule.count({ where: { resource: { isPublished: true } } }),
-    prisma.event.findMany({
-      where: { status: { in: ['UPCOMING', 'LIVE'] } },
-      orderBy: { eventDate: 'asc' },
-      take: 8,
-      select: {
-        slug: true,
-        title: true,
-        category: true,
-        eventDate: true,
-        startTime: true,
-        location: true,
-        locationType: true,
-        cpdHours: true,
-        isPaid: true,
-      },
-    }),
-    prisma.chapter.findMany({
-      where: { isActive: true },
-      orderBy: { name: 'asc' },
-      select: {
-        slug: true,
-        name: true,
-        region: true,
-        city: true,
-        country: true,
-        emoji: true,
-        meetingCadence: true,
-        _count: { select: { memberships: true } },
-      },
-    }),
-  ]);
+  let resources: any[] = [];
+  let totalModules = 0;
+  let upcomingEvents: any[] = [];
+  let chapters: any[] = [];
+
+  try {
+    const fetched = await Promise.all([
+      prisma.resource.findMany({
+        where: { isPublished: true },
+        orderBy: { sortOrder: 'asc' },
+        select: {
+          slug: true,
+          title: true,
+          summary: true,
+          emoji: true,
+          level: true,
+          estHours: true,
+          _count: { select: { modules: true } },
+        },
+      }),
+      prisma.resourceModule.count({ where: { resource: { isPublished: true } } }),
+      prisma.event.findMany({
+        where: { status: { in: ['UPCOMING', 'LIVE'] } },
+        orderBy: { eventDate: 'asc' },
+        take: 8,
+        select: {
+          slug: true,
+          title: true,
+          category: true,
+          eventDate: true,
+          startTime: true,
+          location: true,
+          locationType: true,
+          cpdHours: true,
+          isPaid: true,
+        },
+      }),
+      prisma.chapter.findMany({
+        where: { isActive: true },
+        orderBy: { name: 'asc' },
+        select: {
+          slug: true,
+          name: true,
+          region: true,
+          city: true,
+          country: true,
+          emoji: true,
+          meetingCadence: true,
+          _count: { select: { memberships: true } },
+        },
+      }),
+    ]);
+    resources = fetched[0];
+    totalModules = fetched[1];
+    upcomingEvents = fetched[2];
+    chapters = fetched[3];
+  } catch (err) {
+    console.error('Dashboard Secondary DB Error:', err);
+  }
 
   /* ------------------------------------------------------------- shaping */
 
   const todayStart = new Date();
   todayStart.setHours(0, 0, 0, 0);
 
-  const registrations: DashRegistration[] = user.registrations.map((reg) => {
-    const pending = reg.payments.find((payment) => payment.status === 'PENDING') ?? null;
+  const registrations: DashRegistration[] = (user?.registrations ?? []).map((reg: any) => {
+    const pending = (reg.payments ?? []).find((payment: any) => payment.status === 'PENDING') ?? null;
     return {
       id: reg.id,
       registrationCode: reg.registrationCode,
@@ -293,7 +310,7 @@ export default async function DashboardPage({
   const totalForResource = (slug: string): number =>
     Math.max(moduleTotalBySlug.get(slug) ?? 0, doneByResource.get(slug) ?? 0);
 
-  const modulesDone: DashModuleDone[] = user.resourceProgress.map((row) => ({
+  const modulesDone: DashModuleDone[] = (user?.resourceProgress ?? []).map((row: any) => ({
     id: row.module.id,
     title: row.module.title,
     minutes: row.module.minutes,
@@ -313,7 +330,7 @@ export default async function DashboardPage({
     else if (done > 0) resourcesInProgress += 1;
   });
 
-  const memberships: DashMembership[] = user.memberships.map((row) => ({
+  const memberships: DashMembership[] = (user?.memberships ?? []).map((row: any) => ({
     slug: row.chapter.slug,
     name: row.chapter.name,
     region: row.chapter.region,
@@ -325,7 +342,7 @@ export default async function DashboardPage({
     joinedAt: row.joinedAt.toISOString(),
   }));
 
-  const applications: DashApplication[] = user.applications.map((row) => ({
+  const applications: DashApplication[] = (user?.applications ?? []).map((row: any) => ({
     id: row.id,
     slug: row.opportunity.slug,
     title: row.opportunity.title,

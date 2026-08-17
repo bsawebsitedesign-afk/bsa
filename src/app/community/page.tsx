@@ -15,13 +15,18 @@ export default async function CommunityPage() {
 
   // Compulsory login requirement for Community feature
   if (!session) {
-    redirect('/login?from=/community');
+    redirect('/login?redirect=/community');
   }
 
-  const profile = await prisma.memberProfile.findUnique({
-    where: { userId: session.userId },
-    select: { fullName: true },
-  });
+  let profile: any = null;
+  try {
+    profile = await prisma.memberProfile.findUnique({
+      where: { userId: session.userId },
+      select: { fullName: true },
+    });
+  } catch (err) {
+    console.error('Community Page DB Error:', err);
+  }
 
   return (
     <CommunityClient

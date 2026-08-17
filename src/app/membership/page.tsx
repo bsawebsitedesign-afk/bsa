@@ -124,25 +124,38 @@ const FAQ = [
 ];
 
 export default async function MembershipPage() {
-  const [types, fields, chapters, counts] = await Promise.all([
-    prisma.memberProfile.findMany({ select: { memberType: true } }),
-    prisma.memberProfile.findMany({ select: { field: true } }),
-    prisma.chapter.findMany({
-      where: { isActive: true },
-      orderBy: { name: 'asc' },
-      select: { slug: true, name: true, region: true, emoji: true, meetingCadence: true, country: true },
-    }),
-    Promise.all([
-      prisma.memberProfile.count(),
-      prisma.chapter.count({ where: { isActive: true } }),
-      prisma.event.count({ where: { status: { in: ['UPCOMING', 'LIVE'] } } }),
-      prisma.resource.count({ where: { isPublished: true } }),
-      prisma.resourceModule.count(),
-      prisma.opportunity.count({ where: { isPublished: true } }),
-      prisma.sponsor.count({ where: { isPublished: true } }),
-      prisma.memberProfile.count({ where: { openToMentoring: true } }),
-    ]),
-  ]);
+  let types: any[] = [];
+  let fields: any[] = [];
+  let chapters: any[] = [];
+  let counts: number[] = [0, 0, 0, 0, 0, 0, 0, 0];
+
+  try {
+    const fetched = await Promise.all([
+      prisma.memberProfile.findMany({ select: { memberType: true } }),
+      prisma.memberProfile.findMany({ select: { field: true } }),
+      prisma.chapter.findMany({
+        where: { isActive: true },
+        orderBy: { name: 'asc' },
+        select: { slug: true, name: true, region: true, emoji: true, meetingCadence: true, country: true },
+      }),
+      Promise.all([
+        prisma.memberProfile.count(),
+        prisma.chapter.count({ where: { isActive: true } }),
+        prisma.event.count({ where: { status: { in: ['UPCOMING', 'LIVE'] } } }),
+        prisma.resource.count({ where: { isPublished: true } }),
+        prisma.resourceModule.count(),
+        prisma.opportunity.count({ where: { isPublished: true } }),
+        prisma.sponsor.count({ where: { isPublished: true } }),
+        prisma.memberProfile.count({ where: { openToMentoring: true } }),
+      ]),
+    ]);
+    types = fetched[0];
+    fields = fetched[1];
+    chapters = fetched[2];
+    counts = fetched[3];
+  } catch (err) {
+    console.error('Membership DB Error:', err);
+  }
 
   const [
     memberCount,

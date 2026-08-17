@@ -38,26 +38,39 @@ export default async function LoginPage({
   const redirectTo = safeRedirect(searchParams.redirect);
   const reason = Array.isArray(searchParams.reason) ? searchParams.reason[0] : searchParams.reason;
 
-  const [memberCount, chapterCount, nextEvent, recentMembers] = await Promise.all([
-    prisma.memberProfile.count({
-      where: { user: { role: 'MEMBER', status: 'ACTIVE' } },
-    }),
-    prisma.chapter.count({ where: { isActive: true } }),
-    prisma.event.findFirst({
-      where: { status: { in: ['UPCOMING', 'LIVE'] } },
-      orderBy: { eventDate: 'asc' },
-      select: { slug: true, title: true, eventDate: true, location: true, category: true },
-    }),
-    prisma.memberProfile.findMany({
-      where: {
-        privacy: { isPublic: true, searchableInDirectory: true },
-        user: { role: 'MEMBER', status: 'ACTIVE' },
-      },
-      orderBy: { createdAt: 'desc' },
-      take: 4,
-      select: { handle: true, fullName: true, avatarUrl: true, jobTitle: true, org: true },
-    }),
-  ]);
+  let memberCount = 0;
+  let chapterCount = 0;
+  let nextEvent: any = null;
+  let recentMembers: any[] = [];
+
+  try {
+    const fetched = await Promise.all([
+      prisma.memberProfile.count({
+        where: { user: { role: 'MEMBER', status: 'ACTIVE' } },
+      }),
+      prisma.chapter.count({ where: { isActive: true } }),
+      prisma.event.findFirst({
+        where: { status: { in: ['UPCOMING', 'LIVE'] } },
+        orderBy: { eventDate: 'asc' },
+        select: { slug: true, title: true, eventDate: true, location: true, category: true },
+      }),
+      prisma.memberProfile.findMany({
+        where: {
+          privacy: { isPublic: true, searchableInDirectory: true },
+          user: { role: 'MEMBER', status: 'ACTIVE' },
+        },
+        orderBy: { createdAt: 'desc' },
+        take: 4,
+        select: { handle: true, fullName: true, avatarUrl: true, jobTitle: true, org: true },
+      }),
+    ]);
+    memberCount = fetched[0];
+    chapterCount = fetched[1];
+    nextEvent = fetched[2];
+    recentMembers = fetched[3];
+  } catch (err) {
+    console.error('Login Page DB Error:', err);
+  }
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-[#070A11] text-white py-12 lg:py-16">

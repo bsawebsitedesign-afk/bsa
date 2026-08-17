@@ -50,24 +50,41 @@ const PERKS = [
 ];
 
 export default async function RegisterPage() {
-  const [session, memberCount, chapterCount, resourceCount, roleCount, newest] = await Promise.all([
-    getSession(),
-    prisma.memberProfile.count({
-      where: { user: { role: 'MEMBER', status: 'ACTIVE' } },
-    }),
-    prisma.chapter.count({ where: { isActive: true } }),
-    prisma.resource.count({ where: { isPublished: true } }),
-    prisma.opportunity.count({ where: { isPublished: true } }),
-    prisma.memberProfile.findMany({
-      where: {
-        privacy: { isPublic: true, searchableInDirectory: true },
-        user: { role: 'MEMBER', status: 'ACTIVE' },
-      },
-      orderBy: { createdAt: 'desc' },
-      take: 4,
-      select: { handle: true, fullName: true, avatarUrl: true, jobTitle: true, org: true, createdAt: true },
-    }),
-  ]);
+  let session: any = null;
+  let memberCount = 0;
+  let chapterCount = 0;
+  let resourceCount = 0;
+  let roleCount = 0;
+  let newest: any[] = [];
+
+  try {
+    const fetched = await Promise.all([
+      getSession(),
+      prisma.memberProfile.count({
+        where: { user: { role: 'MEMBER', status: 'ACTIVE' } },
+      }),
+      prisma.chapter.count({ where: { isActive: true } }),
+      prisma.resource.count({ where: { isPublished: true } }),
+      prisma.opportunity.count({ where: { isPublished: true } }),
+      prisma.memberProfile.findMany({
+        where: {
+          privacy: { isPublic: true, searchableInDirectory: true },
+          user: { role: 'MEMBER', status: 'ACTIVE' },
+        },
+        orderBy: { createdAt: 'desc' },
+        take: 4,
+        select: { handle: true, fullName: true, avatarUrl: true, jobTitle: true, org: true, createdAt: true },
+      }),
+    ]);
+    session = fetched[0];
+    memberCount = fetched[1];
+    chapterCount = fetched[2];
+    resourceCount = fetched[3];
+    roleCount = fetched[4];
+    newest = fetched[5];
+  } catch (err) {
+    console.error('Register Page DB Error:', err);
+  }
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-[#070A11] text-white py-12 lg:py-16">

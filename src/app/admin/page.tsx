@@ -38,33 +38,34 @@ export default async function AdminPage() {
   const thirtyDaysAgo = new Date(now.getTime() - 30 * DAY_MS);
   const growthSince = new Date(now.getTime() - GROWTH_WEEKS * 7 * DAY_MS);
 
-  const [
-    counts,
-    memberRows,
-    eventRows,
-    sponsorRows,
-    postRows,
-    opportunityRows,
-    resourceRows,
-    leadRows,
-    applicationRows,
-    signupRows,
-  ] = await Promise.all([
-    Promise.all([
-      prisma.user.count(),
-      prisma.event.count(),
-      prisma.eventRegistration.count(),
-      prisma.formSubmission.count(),
-      prisma.opportunity.count(),
-      prisma.application.count(),
-      prisma.chapter.count(),
-      prisma.blogPost.count(),
-      prisma.resource.count(),
-      prisma.user.count({ where: { createdAt: { gte: sevenDaysAgo } } }),
-      prisma.user.count({ where: { createdAt: { gte: thirtyDaysAgo } } }),
-    ]),
+  let counts: number[] = [0, 0, 0, 0, 0, 0, 0, 0];
+  let memberRows: any[] = [];
+  let eventRows: any[] = [];
+  let sponsorRows: any[] = [];
+  let postRows: any[] = [];
+  let opportunityRows: any[] = [];
+  let resourceRows: any[] = [];
+  let leadRows: any[] = [];
+  let applicationRows: any[] = [];
+  let signupRows: any[] = [];
 
-    prisma.user.findMany({
+  try {
+    const fetched = await Promise.all([
+      Promise.all([
+        prisma.user.count(),
+        prisma.event.count(),
+        prisma.eventRegistration.count(),
+        prisma.formSubmission.count(),
+        prisma.opportunity.count(),
+        prisma.application.count(),
+        prisma.chapter.count(),
+        prisma.chapterMembership.count(),
+        prisma.blogPost.count(),
+        prisma.resource.count(),
+        prisma.user.count({ where: { createdAt: { gte: sevenDaysAgo } } }),
+        prisma.user.count({ where: { createdAt: { gte: thirtyDaysAgo } } }),
+      ]),
+      prisma.user.findMany({
       orderBy: { createdAt: 'desc' },
       take: 100,
       select: {
@@ -223,12 +224,20 @@ export default async function AdminPage() {
         opportunity: { select: { title: true, slug: true, org: true } },
       },
     }),
-
-    prisma.user.findMany({
-      where: { createdAt: { gte: growthSince } },
-      select: { createdAt: true },
-    }),
   ]);
+
+  counts = (fetched[0] ?? [0, 0, 0, 0, 0, 0, 0, 0]) as any;
+  memberRows = fetched[1] ?? [];
+  eventRows = fetched[2] ?? [];
+  sponsorRows = fetched[3] ?? [];
+  postRows = fetched[4] ?? [];
+  opportunityRows = fetched[5] ?? [];
+  resourceRows = fetched[6] ?? [];
+  leadRows = fetched[7] ?? [];
+  applicationRows = fetched[8] ?? [];
+  } catch (err) {
+    console.error('Admin Page DB Error:', err);
+  }
 
   const [
     memberCount,

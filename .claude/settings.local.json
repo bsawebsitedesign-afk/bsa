@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(bash /tmp/claude-501/-Users-ansh-Desktop-BSA/eac48d00-d398-41a6-a927-520a761c2983/scratchpad/smoke.sh)",
+      "Bash(python3 /tmp/claude-501/-Users-ansh-Desktop-BSA/eac48d00-d398-41a6-a927-520a761c2983/scratchpad/ground.py)"
+    ]
+  }
+}

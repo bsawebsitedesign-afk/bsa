@@ -1,0 +1,503 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// ---------------------------------------------------------------------------
+// Accounts & identity
+// ---------------------------------------------------------------------------
+
+model User {
+  id            String   @id @default(uuid())
+  email         String   @unique
+  passwordHash  String
+  role          String   @default("MEMBER") // "MEMBER" | "ADMIN"
+  status        String   @default("ACTIVE") // "ACTIVE" | "PENDING" | "REVOKED"
+  emailVerified Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  profile         MemberProfile?
+  registrations   EventRegistration[]
+  payments        Payment[]
+  formSubmissions FormSubmission[]
+  resourceProgress ResourceProgress[]
+  applications    Application[]
+  memberships     ChapterMembership[]
+  resetTokens     PasswordResetToken[]
+  sentMessages    ChatMessage[] @relation("SentMessages")
+  receivedMessages ChatMessage[] @relation("ReceivedMessages")
+  notifications   SiteNotification[]
+
+  @@index([role])
+}
+
+model MemberProfile {
+  id       String @id @default(uuid())
+  userId   String @unique
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fullName String
+  handle   String @unique // public profile identifier
+
+  headline String // "Head of Corporate Security, EMEA"
+  org      String // employer, practice or organisation
+  jobTitle String @default("")
+  field    String @default("Security") // discipline: Corporate Security, Risk, Cyber, ...
+
+  // PROVISIONAL. The membership model has not been confirmed by the client -
+  // these values are placeholders and are expected to change. See README.
+  memberType String @default("PROFESSIONAL")
+  // "PROFESSIONAL" | "LEADER" | "CONSULTANT" | "VENDOR" | "ORGANISATION"
+
+  location        String
+  bio             String
+  yearsExperience Int?
+
+  avatarUrl    String?
+  linkedinUrl  String?
+  websiteUrl   String?
+  twitterUrl   String?
+  phone        String?
+  contactEmail String?
+
+  specialties String @default("[]") // JSON string[] - areas of expertise
+  skills      String @default("[]") // JSON string[]
+
+  openToOpportunities Boolean @default(false)
+  openToMentoring     Boolean @default(false)
+  openToSpeaking      Boolean @default(false)
+
+  lastActiveAt DateTime @default(now())
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  privacy MemberPrivacy?
+
+  @@index([memberType])
+  @@index([org])
+  @@index([field])
+}
+
+model MemberPrivacy {
+  id                    String        @id @default(uuid())
+  profileId             String        @unique
+  profile               MemberProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  isPublic              Boolean       @default(true)
+  searchableInDirectory Boolean       @default(true)
+  showEmail             Boolean       @default(false)
+  showPhone             Boolean       @default(false)
+  showOrg               Boolean       @default(true)
+  showLinkedIn          Boolean       @default(true)
+  showWebsite           Boolean       @default(true)
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+
+  @@index([searchableInDirectory, isPublic])
+}
+
+model PasswordResetToken {
+  id        String    @id @default(uuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+}
+
+// ---------------------------------------------------------------------------
+// LEARN - industry resources and professional development
+// ---------------------------------------------------------------------------
+
+model Resource {
+  id          String   @id @default(uuid())
+  slug        String   @unique
+  title       String
+  summary     String
+  description String
+  imageUrl    String?
+  level       String   @default("FOUNDATION") // FOUNDATION | PRACTITIONER | EXECUTIVE
+  accent      String   @default("lime")
+  emoji       String   @default("⬡")
+  estHours    Int      @default(4)
+  sortOrder   Int      @default(0)
+  isPublished Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  modules ResourceModule[]
+
+  @@index([isPublished, sortOrder])
+}
+
+model ResourceModule {
+  id          String  @id @default(uuid())
+  resourceId  String
+  resource    Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+  title       String
+  summary     String
+  content     String
+  sortOrder   Int     @default(0)
+  minutes     Int     @default(20)
+  resourceUrl String?
+
+  progress ResourceProgress[]
+
+  @@index([resourceId, sortOrder])
+}
+
+model ResourceProgress {
+  id          String         @id @default(uuid())
+  userId      String
+  user        User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  moduleId    String
+  module      ResourceModule @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  completedAt DateTime       @default(now())
+
+  @@unique([userId, moduleId])
+  @@index([userId])
+}
+
+// ---------------------------------------------------------------------------
+// GROW - business opportunities
+// ---------------------------------------------------------------------------
+
+model Opportunity {
+  id           String    @id @default(uuid())
+  slug         String    @unique
+  title        String
+  org          String
+  logoUrl      String?
+  coverImageUrl String?
+  type         String    @default("ROLE")
+  // "ROLE" | "PARTNERSHIP" | "RFP" | "SPEAKING" | "BOARD_POSITION"
+  locationType String    @default("REMOTE") // REMOTE | HYBRID | ONSITE
+  location     String
+  compensation String?
+  description  String
+  requirements String    @default("[]") // JSON string[]
+  applyUrl     String?
+  deadline     DateTime?
+  isPublished  Boolean   @default(true)
+  postedAt     DateTime  @default(now())
+
+  applications Application[]
+
+  @@index([isPublished, type])
+  @@index([postedAt])
+}
+
+model Application {
+  id            String      @id @default(uuid())
+  opportunityId String
+  opportunity   Opportunity @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+  userId        String?
+  user          User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
+  name          String
+  email         String
+  org           String?
+  profileUrl    String?
+  note          String?
+  status        String      @default("RECEIVED") // RECEIVED | REVIEWING | SHORTLISTED | CLOSED
+  createdAt     DateTime    @default(now())
+
+  @@unique([opportunityId, email])
+  @@index([opportunityId])
+  @@index([userId])
+}
+
+// ---------------------------------------------------------------------------
+// PARTICIPATE - regional chapters
+// ---------------------------------------------------------------------------
+
+model Chapter {
+  id           String   @id @default(uuid())
+  slug         String   @unique
+  name         String
+  region       String // "Northern England", "DACH", "West Africa"
+  city         String
+  country      String   @default("United Kingdom")
+  description  String
+  imageUrl     String?
+  /// Real coordinates, so the globe plots this chapter where it actually is.
+  latitude     Float?
+  longitude    Float?
+  emoji        String   @default("⬡")
+  accent       String   @default("violet")
+  foundedYear  Int      @default(2024)
+  meetingCadence String @default("Quarterly")
+  linkedinUrl  String?
+  contactEmail String?
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+
+  memberships ChapterMembership[]
+
+  @@index([isActive])
+}
+
+model ChapterMembership {
+  id        String   @id @default(uuid())
+  chapterId String
+  chapter   Chapter  @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role      String   @default("MEMBER") // MEMBER | COMMITTEE | CHAIR
+  joinedAt  DateTime @default(now())
+
+  @@unique([chapterId, userId])
+  @@index([userId])
+}
+
+// ---------------------------------------------------------------------------
+// PARTICIPATE - events
+// ---------------------------------------------------------------------------
+
+model Event {
+  id           String    @id @default(uuid())
+  title        String
+  slug         String    @unique
+  description  String
+  fullDetails  String
+  category     String    @default("CONFERENCE")
+  // "CONFERENCE" | "WORKSHOP" | "ROUNDTABLE" | "WEBINAR" | "NETWORKING" | "SUMMIT"
+  eventDate    DateTime
+  endDate      DateTime?
+  startTime    String    @default("09:00 AM")
+  endTime      String    @default("05:00 PM")
+  location     String
+  locationType String    @default("HYBRID") // IN_PERSON | VIRTUAL | HYBRID
+  venueName    String?
+  maxCapacity  Int       @default(200)
+  isPaid       Boolean   @default(false)
+  status       String    @default("UPCOMING") // UPCOMING | LIVE | COMPLETED | DRAFT
+  heroImageUrl String?
+  videoUrl     String?
+  cpdHours     Int       @default(0) // continuing professional development credit
+  agendaJson   String    @default("[]") // JSON [{time,title,detail}]
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  speakers      EventSpeaker[]
+  sponsors      EventSponsor[]
+  tickets       EventTicket[]
+  registrations EventRegistration[]
+
+  @@index([status, eventDate])
+  @@index([category])
+}
+
+model EventSpeaker {
+  id        String  @id @default(uuid())
+  eventId   String
+  event     Event   @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  name      String
+  title     String
+  company   String
+  avatarUrl String?
+  bio       String?
+
+  @@index([eventId])
+}
+
+model Sponsor {
+  id          String   @id @default(uuid())
+  name        String
+  logoUrl     String
+  tier        String   @default("GOLD") // DIAMOND | GOLD | SILVER | COMMUNITY
+  description String
+  websiteUrl  String
+  ctaText     String?  @default("Learn More")
+  ctaUrl      String?
+  isHiring    Boolean  @default(false)
+  perkText    String?
+  isPublished Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  eventSponsors EventSponsor[]
+
+  @@index([isPublished, tier])
+}
+
+model EventSponsor {
+  id        String  @id @default(uuid())
+  eventId   String
+  event     Event   @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  sponsorId String
+  sponsor   Sponsor @relation(fields: [sponsorId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, sponsorId])
+}
+
+model EventTicket {
+  id                String  @id @default(uuid())
+  eventId           String
+  event             Event   @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  name              String
+  price             Float   @default(0.0)
+  currency          String  @default("USD")
+  description       String?
+  quantityAvailable Int     @default(100)
+  quantitySold      Int     @default(0)
+  isAvailable       Boolean @default(true)
+
+  registrations EventRegistration[]
+
+  @@index([eventId])
+}
+
+model EventRegistration {
+  id               String       @id @default(uuid())
+  eventId          String
+  event            Event        @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  userId           String?
+  user             User?        @relation(fields: [userId], references: [id], onDelete: SetNull)
+  ticketId         String?
+  ticket           EventTicket? @relation(fields: [ticketId], references: [id], onDelete: SetNull)
+  registrationCode String       @unique
+  status           String       @default("CONFIRMED") // CONFIRMED | CANCELLED | PENDING_PAYMENT
+  registeredAt     DateTime     @default(now())
+  attendeeName     String
+  attendeeEmail    String
+  attendeeCompany  String?
+
+  payments Payment[]
+
+  @@unique([eventId, attendeeEmail])
+  @@index([eventId])
+  @@index([userId])
+  @@index([attendeeEmail])
+}
+
+model Payment {
+  id                  String             @id @default(uuid())
+  userId              String?
+  user                User?              @relation(fields: [userId], references: [id], onDelete: SetNull)
+  eventRegistrationId String?
+  eventRegistration   EventRegistration? @relation(fields: [eventRegistrationId], references: [id], onDelete: SetNull)
+  amount              Float
+  currency            String             @default("USD")
+  status              String             @default("PENDING") // PENDING | COMPLETED | FAILED | REFUNDED
+  provider            String             @default("MODULAR_GATEWAY")
+  transactionId       String             @unique
+  createdAt           DateTime           @default(now())
+
+  @@index([userId])
+}
+
+// ---------------------------------------------------------------------------
+// Content & leads
+// ---------------------------------------------------------------------------
+
+model BlogPost {
+  id              String   @id @default(uuid())
+  title           String
+  slug            String   @unique
+  summary         String
+  content         String
+  category        String   @default("Industry Insight")
+  tags            String   @default("[]") // JSON string[]
+  imageUrl        String?
+  authorName      String
+  authorTitle     String
+  authorAvatar    String?
+  publishedAt     DateTime @default(now())
+  isFeatured      Boolean  @default(false)
+  isPublished     Boolean  @default(true)
+  readTimeMinutes Int      @default(5)
+  createdAt       DateTime @default(now())
+
+  @@index([slug])
+  @@index([isFeatured, publishedAt])
+}
+
+model FormSubmission {
+  id               String   @id @default(uuid())
+  userId           String?
+  user             User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  name             String
+  email            String
+  company          String?
+  formType         String   @default("CONTACT")
+  // CONTACT | MEMBERSHIP_INQUIRY | SPONSOR_INQUIRY | EVENT_LEAD | CHAPTER_REQUEST | PARTNERSHIP_INQUIRY
+  source           String?  @default("direct")
+  campaign         String?  @default("organic")
+  message          String
+  metadataJson     String?  @default("{}")
+  hubspotStatus    String   @default("PENDING") // SYNCED | PENDING | FAILED | SKIPPED
+  hubspotContactId String?
+  isHandled        Boolean  @default(false)
+  createdAt        DateTime @default(now())
+
+  @@index([formType])
+  @@index([hubspotStatus])
+  @@index([email])
+}
+
+// ---------------------------------------------------------------------------
+// Media Directory & Assets
+// ---------------------------------------------------------------------------
+
+model MediaAsset {
+  id         String   @id @default(uuid())
+  name       String
+  url        String   // base64 data URL or storage URL
+  mimeType   String   @default("image/png")
+  sizeBytes  Int      @default(0)
+  category   String   @default("GENERAL") // EVENT_THUMBNAIL | AVATAR | PARTNER_LOGO | BANNER | GENERAL
+  uploadedBy String?
+  createdAt  DateTime @default(now())
+
+  @@index([category])
+  @@index([createdAt])
+}
+
+// ---------------------------------------------------------------------------
+// Global Community Hub & Private Messaging
+// ---------------------------------------------------------------------------
+
+model ChatMessage {
+  id          String   @id @default(uuid())
+  senderId    String
+  sender      User     @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  channel     String?  @default("general") // "general" | "convergence" | "incidents" | "careers" | null for private DM
+  recipientId String?  // null if public channel message
+  recipient   User?    @relation("ReceivedMessages", fields: [recipientId], references: [id], onDelete: Cascade)
+  content     String
+  imageUrl    String?
+  attachments String   @default("[]")
+  reactions   String   @default("{}")
+  createdAt   DateTime @default(now())
+
+  @@index([channel])
+  @@index([senderId])
+  @@index([recipientId])
+  @@index([createdAt])
+}
+
+// ---------------------------------------------------------------------------
+// Broadcast Notifications & Site Alerts
+// ---------------------------------------------------------------------------
+
+model SiteNotification {
+  id          String   @id @default(uuid())
+  title       String
+  message     String
+  type        String   @default("INFO") // INFO | ALERT | SUMMIT | ADVISORY | UPDATE
+  linkUrl     String?
+  linkText    String?
+  targetRole  String   @default("ALL") // ALL | MEMBER | PUBLIC
+  isPinned    Boolean  @default(false)
+  isActive    Boolean  @default(true)
+  createdById String?
+  createdBy   User?    @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([isActive, createdAt])
+}

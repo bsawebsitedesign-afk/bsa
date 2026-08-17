@@ -1,0 +1,678 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ==========================================================================
+   Theme tokens
+
+   Section 8.A, CSS-variable strategy. Every colour in tailwind.config.ts reads
+   one of these, so the whole page tree themes without touching a single
+   component. Values are space-separated RGB so Tailwind's `<alpha-value>`
+   still works (`bg-surface/70`).
+
+   Three states are covered, as a viewer has three: the bare `:root` block is
+   the light palette; `prefers-color-scheme: dark` redefines the tokens for the
+   un-stamped default; and `[data-theme]` redefines them again so an explicit
+   choice wins in both directions.
+
+   Every text token below was checked against every surface it can sit on and
+   clears WCAG AA (4.5:1) in both modes. `ink-faint` is the sole exception and
+   is decorative only: rules, dividers and disabled marks, never text.
+   ========================================================================== */
+
+@layer base {
+  :root {
+    /* --- dark obsidian plate + steel blue + silver medallion default --- */
+    --void: 10 13 18;
+    --base: 15 19 26;
+    --surface: 22 28 38;
+    --surface-raised: 30 38 50;
+    --surface-high: 40 50 66;
+    --surface-inset: 12 15 21;
+
+    --line: 45 57 74;
+    --line-soft: 32 41 54;
+    --line-bright: 70 86 110;
+
+    --ink: 245 248 255;
+    --ink-soft: 215 225 240;
+    --ink-muted: 175 190 210;
+    --ink-faint: 110 125 145;
+
+    /* The shield's exact steel blue field */
+    --cyan: 82 134 184;
+    --cyan-bright: 120 168 215;
+    --cyan-deep: 50 90 130;
+    --cyan-dark: 25 45 65;
+
+    --violet: 110 155 200;
+    --violet-bright: 145 185 225;
+    --violet-deep: 70 110 150;
+    --violet-dark: 25 45 65;
+
+    --emerald: 65 160 130;
+    --amber: 220 150 50;
+    --rose: 220 80 100;
+
+    --on-accent: 255 255 255;
+
+    --grad-a: 70 116 160;
+    --grad-b: 46 82 116;
+    --grad-c: 30 54 79;
+    --shadow: 18 28 42;
+
+    --bevel-light: 255 255 255;
+    --bevel-dark: 18 28 42;
+
+    /* --- glass ------------------------------------------------------------
+       Frosted surfaces are used only where something is genuinely behind
+       them - the header over the page, a readout over the hero canvas, a
+       badge over a photograph. `fill` is the frost body, `hi` the lit top
+       lip, `edge` the hairline. Light needs a heavier frost than dark: white
+       over white has no contrast to borrow, so the fill carries it. */
+    --glass-fill: 255 255 255;
+    --glass-fill-a: 0.6;
+    --glass-fill-strong-a: 0.86;
+    --glass-hi: 255 255 255;
+    --glass-hi-a: 0.9;
+    --glass-edge: 168 180 197;
+    --glass-edge-a: 0.7;
+    --glass-blur: 20px;
+
+    --nav-h: 68px;
+    --scroll-progress: 0;
+  }
+
+  /* --- dark: deep obsidian plate + steel blue + silver medallion -------- */
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme='light']) {
+      --void: 10 13 18;
+      --base: 15 19 26;
+      --surface: 22 28 38;
+      --surface-raised: 30 38 50;
+      --surface-high: 40 50 66;
+      --surface-inset: 12 15 21;
+
+      --line: 45 57 74;
+      --line-soft: 32 41 54;
+      --line-bright: 70 86 110;
+
+      --ink: 240 244 250;
+      --ink-soft: 180 192 208;
+      --ink-muted: 130 144 165;
+      --ink-faint: 85 98 118;
+
+      /* Shield Steel Blue (#2E5274 -> #5286B8 for dark contrast) */
+      --cyan: 82 134 184;
+      --cyan-bright: 120 168 215;
+      --cyan-deep: 50 90 130;
+      --cyan-dark: 25 45 65;
+
+      --violet: 110 155 200;
+      --violet-bright: 145 185 225;
+      --violet-deep: 70 110 150;
+      --violet-dark: 25 45 65;
+
+      --emerald: 65 160 130;
+      --amber: 220 150 50;
+      --rose: 220 80 100;
+
+      --on-accent: 10 13 18;
+
+      --grad-a: 120 168 215;
+      --grad-b: 82 134 184;
+      --grad-c: 50 90 130;
+      --shadow: 0 0 0;
+
+      --bevel-light: 255 255 255;
+      --bevel-dark: 0 0 0;
+
+      /* On the dark plate the frost is the surface itself, thinned. The lit
+         lip and hairline drop right down: at dark-mode alphas a white edge
+         at 0.85 reads as a drawn white box, not as an edge catching light. */
+      --glass-fill: 28 36 48;
+      --glass-fill-a: 0.55;
+      --glass-fill-strong-a: 0.82;
+      --glass-hi: 255 255 255;
+      --glass-hi-a: 0.14;
+      --glass-edge: 255 255 255;
+      --glass-edge-a: 0.12;
+      --glass-blur: 22px;
+    }
+  }
+
+  /* --- dark, when explicitly chosen ------------------------------------- */
+  :root[data-theme='dark'] {
+    --void: 10 13 18;
+    --base: 15 19 26;
+    --surface: 22 28 38;
+    --surface-raised: 30 38 50;
+    --surface-high: 40 50 66;
+    --surface-inset: 12 15 21;
+
+    --line: 45 57 74;
+    --line-soft: 32 41 54;
+    --line-bright: 70 86 110;
+
+    --ink: 240 244 250;
+    --ink-soft: 180 192 208;
+    --ink-muted: 130 144 165;
+    --ink-faint: 85 98 118;
+
+    --cyan: 82 134 184;
+    --cyan-bright: 120 168 215;
+    --cyan-deep: 50 90 130;
+    --cyan-dark: 25 45 65;
+
+    --violet: 110 155 200;
+    --violet-bright: 145 185 225;
+    --violet-deep: 70 110 150;
+    --violet-dark: 25 45 65;
+
+    --emerald: 65 160 130;
+    --amber: 220 150 50;
+    --rose: 220 80 100;
+
+    --on-accent: 10 13 18;
+
+    --grad-a: 120 168 215;
+    --grad-b: 82 134 184;
+    --grad-c: 50 90 130;
+    --shadow: 0 0 0;
+
+    --bevel-light: 255 255 255;
+    --bevel-dark: 0 0 0;
+
+    --glass-fill: 28 36 48;
+    --glass-fill-a: 0.55;
+    --glass-fill-strong-a: 0.82;
+    --glass-hi: 255 255 255;
+    --glass-hi-a: 0.14;
+    --glass-edge: 255 255 255;
+    --glass-edge-a: 0.12;
+    --glass-blur: 22px;
+  }
+
+  * {
+    border-color: theme('colors.line.DEFAULT');
+  }
+
+  html {
+    scroll-behavior: smooth;
+    scroll-padding-top: calc(var(--nav-h) + 28px);
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    margin: 0;
+    background-color: rgb(var(--base));
+    color: theme('colors.ink.DEFAULT');
+    font-family: var(--font-sans), 'IBM Plex Sans', system-ui, sans-serif;
+    font-size: 1rem;
+    line-height: 1.75;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    overflow-x: hidden;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display), Archivo, system-ui, sans-serif;
+    font-weight: 700;
+    color: theme('colors.ink.DEFAULT');
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  ::selection {
+    background-color: #00e5ff;
+    color: #070a11;
+    text-shadow: none;
+  }
+
+  ::-moz-selection {
+    background-color: #00e5ff;
+    color: #070a11;
+    text-shadow: none;
+  }
+
+  :focus-visible {
+    outline: 2px solid theme('colors.cyan.DEFAULT');
+    outline-offset: 3px;
+    border-radius: 4px;
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: theme('colors.surface.inset');
+  }
+  ::-webkit-scrollbar-thumb {
+    background: theme('colors.line.bright');
+    border-radius: 6px;
+    border: 2px solid theme('colors.surface.inset');
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: theme('colors.cyan.dark');
+  }
+
+  html {
+    scrollbar-color: theme('colors.line.bright') theme('colors.surface.inset');
+  }
+}
+
+/* ==========================================================================
+   Components
+   ========================================================================== */
+
+@layer components {
+  /* The panel: a hairline box with an inner top highlight, the way light
+     catches the top edge of a surface lifted off the plate.
+
+     The fill is opaque and a real step above the ground. A translucent
+     surface over near-black composites to about 1.03:1 against the page,
+     which leaves every card as a bare 1px rectangle - the stock dark-SaaS
+     look, and the single biggest reason a page of these reads as generic. */
+  .panel {
+    @apply relative rounded-md border border-line bg-surface-raised;
+    /* The badge is struck metal, so elevation is an engraved edge: a lit top
+       lip and a shadowed lower one, the way a raised plate catches light.
+       No glow, and no flat drop shadow either. */
+    box-shadow:
+      inset 0 1px 0 rgb(var(--bevel-light) / 0.55),
+      inset 0 -1px 0 rgb(var(--bevel-dark) / 0.06),
+      0 1px 2px rgb(var(--shadow) / 0.08),
+      0 8px 20px -14px rgb(var(--shadow) / 0.22);
+  }
+
+  .panel-raised {
+    @apply relative rounded-md border border-line-bright bg-surface-raised;
+    box-shadow:
+      inset 0 1px 0 rgb(var(--bevel-light) / 0.6),
+      inset 0 -1px 0 rgb(var(--bevel-dark) / 0.08),
+      0 2px 4px rgb(var(--shadow) / 0.1),
+      0 20px 44px -24px rgb(var(--shadow) / 0.3);
+  }
+
+  /* Interactive panels gain a cyan rim and lift toward the reader. */
+  .panel-hover {
+    @apply transition-[transform,border-color,box-shadow] duration-300 ease-out;
+  }
+  .panel-hover:hover {
+    @apply -translate-y-px border-cyan/45;
+    /* The plate lifts and its engraved edge catches a little more light. */
+    box-shadow:
+      inset 0 1px 0 rgb(var(--bevel-light) / 0.7),
+      inset 0 -1px 0 rgb(var(--bevel-dark) / 0.08),
+      0 4px 8px rgb(var(--shadow) / 0.1),
+      0 22px 48px -26px rgb(var(--shadow) / 0.34);
+  }
+
+  /* The one card per view that matters most: gradient hairline. */
+  .panel-brand {
+    @apply relative rounded-lg bg-surface;
+    border: 1px solid transparent;
+    background-image:
+      linear-gradient(theme('colors.surface.DEFAULT'), theme('colors.surface.DEFAULT')),
+      theme('backgroundImage.grad-brand');
+    background-origin: border-box;
+    background-clip: padding-box, border-box;
+  }
+
+  /* ------------------------------------------------------------------ glass
+
+     Frosted surfaces. Used only where there is something behind worth
+     seeing through - the header over the page, the readouts over the hero
+     medallion, a date badge over a photograph, partner cards over the globe.
+     Not a default card style: a page of frosted boxes over a flat colour is
+     the stock look and reads as decoration rather than as material.
+
+     Four layers make it a material rather than a blur:
+       1. the frost body, a translucent fill;
+       2. a diagonal refraction sweep across the face;
+       3. a lit top lip and a shadowed lower one, the same struck edge the
+          opaque `.panel` uses, so glass and metal belong to one system;
+       4. depth beneath, tinted to the ground.
+
+     `prefers-reduced-transparency` and browsers without `backdrop-filter`
+     both fall back to the solid raised surface at the foot of this block. */
+  .glass,
+  .glass-panel {
+    @apply relative rounded-lg;
+    background-color: rgb(var(--glass-fill) / var(--glass-fill-a));
+    background-image: linear-gradient(
+      143deg,
+      rgb(var(--glass-hi) / calc(var(--glass-hi-a) * 0.32)) 0%,
+      transparent 46%
+    );
+    backdrop-filter: blur(var(--glass-blur)) saturate(150%);
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(150%);
+    border: 1px solid rgb(var(--glass-edge) / var(--glass-edge-a));
+    box-shadow:
+      inset 0 1px 0 rgb(var(--glass-hi) / var(--glass-hi-a)),
+      inset 0 -1px 0 rgb(var(--bevel-dark) / 0.1),
+      0 1px 2px rgb(var(--shadow) / 0.08),
+      0 18px 44px -24px rgb(var(--shadow) / 0.4);
+  }
+
+  /* Carries body copy, so the frost is thick enough to read against anything
+     moving behind it. Anywhere text sits on glass uses this, never `.glass`. */
+  .glass-panel {
+    background-color: rgb(var(--glass-fill) / var(--glass-fill-strong-a));
+    backdrop-filter: blur(calc(var(--glass-blur) * 1.4)) saturate(160%);
+    -webkit-backdrop-filter: blur(calc(var(--glass-blur) * 1.4)) saturate(160%);
+  }
+
+  .glass-morphism {
+    background: rgba(18, 24, 34, 0.75);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  }
+
+  .glass-card-executive {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02)), rgba(18, 24, 32, 0.85);
+    backdrop-filter: blur(16px) saturate(170%);
+    -webkit-backdrop-filter: blur(16px) saturate(170%);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    box-shadow: 0 14px 40px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  }
+
+  .text-3d-pop {
+    color: #ffffff;
+    text-shadow:
+      3px 4px 0px #0f1318,
+      6px 8px 0px #2e5274,
+      10px 12px 25px rgba(0, 0, 0, 0.7);
+  }
+
+  .text-3d-pop-cyan {
+    color: #78a8d7;
+    text-shadow:
+      3px 4px 0px #0f1318,
+      6px 8px 0px #1e3a5f,
+      10px 12px 25px rgba(120, 168, 215, 0.6);
+  }
+
+  /* Badges and pills: less blur, because there is less of them to see through. */
+  .glass-chip {
+    @apply relative inline-flex items-center;
+    background-color: rgb(var(--glass-fill) / calc(var(--glass-fill-a) + 0.2));
+    backdrop-filter: blur(12px) saturate(150%);
+    -webkit-backdrop-filter: blur(12px) saturate(150%);
+    border: 1px solid rgb(var(--glass-edge) / var(--glass-edge-a));
+    box-shadow:
+      inset 0 1px 0 rgb(var(--glass-hi) / calc(var(--glass-hi-a) * 0.8)),
+      0 2px 8px -4px rgb(var(--shadow) / 0.35);
+  }
+
+  /* The rim lights up and the plate lifts, matching `.panel-hover`. */
+  .glass-hover {
+    @apply transition-[transform,border-color,box-shadow,background-color] duration-300 ease-out;
+  }
+  .glass-hover:hover {
+    @apply -translate-y-px border-cyan/50;
+    background-color: rgb(var(--glass-fill) / calc(var(--glass-fill-a) + 0.12));
+    box-shadow:
+      inset 0 1px 0 rgb(var(--glass-hi) / var(--glass-hi-a)),
+      inset 0 -1px 0 rgb(var(--bevel-dark) / 0.1),
+      0 4px 10px rgb(var(--shadow) / 0.1),
+      0 24px 52px -26px rgb(var(--shadow) / 0.46);
+  }
+
+  /* Section label: a node, then the words. */
+  .kicker {
+    @apply inline-flex items-center gap-2.5 font-mono text-[0.6875rem] font-medium uppercase tracking-[0.22em] text-cyan;
+  }
+
+  /* Figures line up in columns wherever they are compared. */
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Glass fallbacks.
+
+   A reader who has asked for less transparency, or a browser that cannot
+   composite a backdrop, gets the solid raised surface instead. Nothing is
+   lost: every glass surface on the site is a panel first and frosted second,
+   so the layout, the hairline and the contrast are all unchanged.
+   -------------------------------------------------------------------------- */
+
+@supports not ((backdrop-filter: blur(4px)) or (-webkit-backdrop-filter: blur(4px))) {
+  .text-3d-pop {
+    color: #ffffff;
+    text-shadow:
+      3px 4px 0px #0f1318,
+      6px 8px 0px #2e5274,
+      10px 12px 25px rgba(0, 0, 0, 0.7);
+  }
+
+  .text-3d-pop-cyan {
+    color: #78a8d7;
+    text-shadow:
+      3px 4px 0px #0f1318,
+      6px 8px 0px #1e3a5f,
+      10px 12px 25px rgba(120, 168, 215, 0.6);
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .glass,
+  .glass-panel,
+  .glass-chip {
+    background-color: rgb(var(--surface-raised));
+    background-image: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}
+
+/* ==========================================================================
+   Utilities - geometry, texture and scroll behaviour
+   ========================================================================== */
+
+@layer utilities {
+  /* The mark's escutcheon: flat shoulders, straight flanks, drawn to a point.
+     Used for avatars and icon tiles. The class name predates the shape and is
+     kept so no call site has to change. */
+  .hex-clip {
+    clip-path: polygon(0% 0%, 100% 0%, 100% 56%, 50% 100%, 0% 56%);
+  }
+
+  /* Lattice grid: the edges of the network, faint, behind content. */
+  .mesh-grid {
+    background-image:
+      linear-gradient(to right, rgb(var(--ink) / 0.07) 1px, transparent 1px),
+      linear-gradient(to bottom, rgb(var(--ink) / 0.07) 1px, transparent 1px);
+    background-size: 64px 64px;
+  }
+
+  /* The portcullis across the shield: a raised orthogonal lattice, each bar
+     catching light on one edge. Anywhere the grid is the subject uses this. */
+  .mesh-tri {
+    background-image:
+      repeating-linear-gradient(
+        90deg,
+        rgb(var(--ink) / 0.09) 0 1px,
+        rgb(var(--bevel-light) / 0.35) 1px 2px,
+        transparent 2px 34px
+      ),
+      repeating-linear-gradient(
+        0deg,
+        rgb(var(--ink) / 0.09) 0 1px,
+        rgb(var(--bevel-light) / 0.35) 1px 2px,
+        transparent 2px 34px
+      );
+  }
+
+  /* Rivets: the studs set around the medallion's rim. */
+  .mesh-dots {
+    background-image: radial-gradient(rgb(var(--ink) / 0.14) 1.5px, transparent 1.6px);
+    background-size: 30px 30px;
+  }
+
+  /* Not light bleed - the sheen a curved metal face throws under a raking
+     light. Broad, low-contrast, and in the accent's own hue. */
+  .aura-cyan {
+    background: radial-gradient(70% 60% at 50% 0%, rgb(var(--cyan) / 0.07), transparent 72%);
+  }
+  .aura-violet {
+    background: radial-gradient(70% 60% at 50% 100%, rgb(var(--cyan) / 0.06), transparent 72%);
+  }
+  /* The hero only. The medallion is lit from above and to the right, so the
+     plate behind it carries the same fall of light rather than a flat wash.
+     Stronger than `.aura-cyan` because here it is doing work: it separates
+     the coin from the ground so the object reads as an object. */
+  .aura-hero {
+    background:
+      radial-gradient(58% 46% at 72% 40%, rgb(var(--cyan) / 0.2), transparent 68%),
+      radial-gradient(90% 60% at 50% 0%, rgb(var(--cyan) / 0.1), transparent 74%),
+      radial-gradient(70% 50% at 20% 90%, rgb(var(--violet) / 0.07), transparent 72%);
+  }
+
+  .aura-split {
+    background:
+      radial-gradient(50% 50% at 12% 10%, rgb(var(--bevel-light) / 0.1), transparent 70%),
+      radial-gradient(55% 55% at 88% 90%, rgb(var(--cyan) / 0.08), transparent 72%);
+  }
+
+  .text-gradient {
+    background: theme('backgroundImage.grad-brand');
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  /* Raised type, lit the way a node is lit. Used once per page at most, on the
+     one word a closing headline turns on. */
+  /* Struck type: the lit lip above, the shadow below. Once per page at most. */
+  .text-extrude {
+    color: rgb(var(--ink));
+    text-shadow:
+      0 -1px 0 rgb(var(--bevel-light) / 0.7),
+      0 1px 0 rgb(var(--bevel-dark) / 0.35),
+      0 2px 3px rgb(var(--shadow) / 0.2);
+  }
+
+  /* Fades a strip into its background at both ends. */
+  .edge-mask {
+    -webkit-mask-image: linear-gradient(to right, transparent, #000 7%, #000 93%, transparent);
+    mask-image: linear-gradient(to right, transparent, #000 7%, #000 93%, transparent);
+  }
+  .edge-mask-y {
+    -webkit-mask-image: linear-gradient(to bottom, transparent, #000 8%, #000 92%, transparent);
+    mask-image: linear-gradient(to bottom, transparent, #000 8%, #000 92%, transparent);
+  }
+
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Pins a scene while its parent scrolls past - used for the step sequences. */
+  .scene-sticky {
+    position: sticky;
+    top: calc(var(--nav-h) + 2rem);
+  }
+
+  /* Photography: a fixed frame the image fills, so a missing or slow photo
+     never shifts the layout. */
+  .photo-frame {
+    @apply relative overflow-hidden rounded-lg border border-line bg-surface-inset;
+  }
+  .photo-frame > img {
+    @apply h-full w-full object-cover;
+  }
+
+  /* Progressive image reveal, driven by the ScrollReveal wrapper. */
+  .clip-reveal {
+    clip-path: inset(0 0 100% 0);
+    transition: clip-path 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .clip-reveal[data-shown='true'] {
+    clip-path: inset(0 0 0% 0);
+  }
+
+  .font-accent {
+    font-family: var(--font-accent), cursive, sans-serif;
+  }
+
+  /* The turned word in a hero headline.
+     Both of these were fixed hex, picked for the dark plate. On the light
+     palette #78a8d7 against #f2f4f7 is about 2.2:1 - below AA even for display
+     type - so they read the theme now. The glow only exists on the dark
+     plate; a bloom on paper is just a blurred edge. */
+  .text-cyan-electric {
+    color: rgb(var(--cyan-deep));
+  }
+  .text-lime-electric {
+    color: rgb(var(--emerald));
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme='light']) .text-cyan-electric {
+      color: rgb(var(--cyan-bright));
+      text-shadow: 0 0 25px rgb(var(--cyan) / 0.5);
+    }
+    :root:not([data-theme='light']) .text-lime-electric {
+      color: rgb(var(--emerald));
+      text-shadow: 0 0 25px rgb(var(--emerald) / 0.45);
+    }
+  }
+
+  :root[data-theme='dark'] .text-cyan-electric {
+    color: rgb(var(--cyan-bright));
+    text-shadow: 0 0 25px rgb(var(--cyan) / 0.5);
+  }
+  :root[data-theme='dark'] .text-lime-electric {
+    color: rgb(var(--emerald));
+    text-shadow: 0 0 25px rgb(var(--emerald) / 0.45);
+  }
+}
+
+/* ==========================================================================
+   Reduced motion.
+   Everything decorative stops. Nothing that conveys state depends on movement,
+   so nothing is lost - reveals resolve to their final position immediately.
+   ========================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .panel-hover:hover {
+    transform: none;
+  }
+
+  .clip-reveal {
+    clip-path: none;
+  }
+
+  .scene-sticky {
+    position: static;
+  }
+}

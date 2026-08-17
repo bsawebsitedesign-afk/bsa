@@ -1,0 +1,5 @@
+.next
+node_modules
+prisma/dev.db
+stitch_bsa_nexus_platform
+package-lock.json

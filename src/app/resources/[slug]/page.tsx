@@ -49,16 +49,20 @@ const LEVEL_BLURB: Record<string, string> = {
 };
 
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
-  const resource = await prisma.resource.findUnique({
-    where: { slug: params.slug },
-    select: { title: true, summary: true, isPublished: true },
-  });
+  try {
+    const resource = await prisma.resource.findUnique({
+      where: { slug: params.slug },
+      select: { title: true, summary: true, isPublished: true },
+    });
 
-  if (!resource || !resource.isPublished) {
-    return { title: 'Resource not found', description: 'That resource is not in the library.' };
+    if (!resource || !resource.isPublished) {
+      return { title: 'Resource not found', description: 'That resource is not in the library.' };
+    }
+
+    return { title: resource.title, description: resource.summary };
+  } catch (err) {
+    return { title: 'BSA Resource', description: 'Practical written guidance for security professionals.' };
   }
-
-  return { title: resource.title, description: resource.summary };
 }
 
 export default async function ResourcePage({ params }: { params: { slug: string } }) {

@@ -64,19 +64,23 @@ function RichText({ text }: { text: string }) {
 /* -------------------------------------------------------------------------- */
 
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
-  const event = await prisma.event.findUnique({
-    where: { slug: params.slug },
-    select: { title: true, description: true, eventDate: true, location: true },
-  });
+  try {
+    const event = await prisma.event.findUnique({
+      where: { slug: params.slug },
+      select: { title: true, description: true, eventDate: true, location: true },
+    });
 
-  if (!event) {
-    return { title: 'Event not found', description: 'That event is not on the calendar.' };
+    if (!event) {
+      return { title: 'Event not found', description: 'That event is not on the calendar.' };
+    }
+
+    return {
+      title: event.title,
+      description: `${formatDate(event.eventDate)} · ${event.location}. ${event.description}`.slice(0, 300),
+    };
+  } catch (err) {
+    return { title: 'BSA Event', description: 'Business Security Alliance Event details.' };
   }
-
-  return {
-    title: event.title,
-    description: `${formatDate(event.eventDate)} · ${event.location}. ${event.description}`.slice(0, 300),
-  };
 }
 
 /* -------------------------------------------------------------------------- */

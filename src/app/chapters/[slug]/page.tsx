@@ -29,19 +29,23 @@ const ROLE_LABEL: Record<string, string> = {
 };
 
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
-  const chapter = await prisma.chapter.findUnique({
-    where: { slug: params.slug },
-    select: { name: true, region: true, city: true, country: true, description: true },
-  });
+  try {
+    const chapter = await prisma.chapter.findUnique({
+      where: { slug: params.slug },
+      select: { name: true, region: true, city: true, country: true, description: true },
+    });
 
-  if (!chapter) {
-    return { title: 'Chapter not found', description: 'That chapter is not listed.' };
+    if (!chapter) {
+      return { title: 'Chapter not found', description: 'That chapter is not listed.' };
+    }
+
+    return {
+      title: `${chapter.name} · ${chapter.region}`,
+      description: `${chapter.city}, ${chapter.country}. ${chapter.description}`,
+    };
+  } catch (err) {
+    return { title: 'BSA Regional Chapter', description: 'Regional peer group for security professionals.' };
   }
-
-  return {
-    title: `${chapter.name} · ${chapter.region}`,
-    description: `${chapter.city}, ${chapter.country}. ${chapter.description}`,
-  };
 }
 
 export default async function ChapterPage({ params }: { params: { slug: string } }) {

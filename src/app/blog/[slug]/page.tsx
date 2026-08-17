@@ -143,16 +143,20 @@ function renderArticle(content: string): React.ReactNode[] {
 /* -------------------------------------------------------------------------- */
 
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
-  const post = await prisma.blogPost.findFirst({
-    where: { slug: params.slug, isPublished: true },
-    select: { title: true, summary: true },
-  });
+  try {
+    const post = await prisma.blogPost.findFirst({
+      where: { slug: params.slug, isPublished: true },
+      select: { title: true, summary: true },
+    });
 
-  if (!post) {
-    return { title: 'Post not found', description: 'That piece is not on the feed.' };
+    if (!post) {
+      return { title: 'Post not found', description: 'That piece is not on the feed.' };
+    }
+
+    return { title: post.title, description: post.summary };
+  } catch (err) {
+    return { title: 'BSA Feed Article', description: 'Field notes and writeups by BSA members.' };
   }
-
-  return { title: post.title, description: post.summary };
 }
 
 export default async function BlogPostPage({ params }: { params: { slug: string } }) {

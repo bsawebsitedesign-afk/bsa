@@ -61,32 +61,36 @@ const CHAPTER_ROLE: Record<string, ChipTone> = {
 /* -------------------------------------------------------------------------- */
 
 export async function generateMetadata({ params }: { params: { handle: string } }): Promise<Metadata> {
-  const profile = await prisma.memberProfile.findUnique({
-    where: { handle: params.handle },
-    select: {
-      fullName: true,
-      handle: true,
-      headline: true,
-      org: true,
-      field: true,
-      location: true,
-      privacy: { select: { isPublic: true, showOrg: true } },
-    },
-  });
+  try {
+    const profile = await prisma.memberProfile.findUnique({
+      where: { handle: params.handle },
+      select: {
+        fullName: true,
+        handle: true,
+        headline: true,
+        org: true,
+        field: true,
+        location: true,
+        privacy: { select: { isPublic: true, showOrg: true } },
+      },
+    });
 
-  if (!profile || !profile.privacy?.isPublic) {
+    if (!profile || !profile.privacy?.isPublic) {
+      return {
+        title: 'Member not found',
+        description: 'That profile does not exist, or the member has chosen to keep it private.',
+      };
+    }
+
+    const org = profile.privacy.showOrg ? ` ${profile.org}.` : '';
+
     return {
-      title: 'Member not found',
-      description: 'That profile does not exist, or the member has chosen to keep it private.',
+      title: `${profile.fullName} - ${profile.headline}`,
+      description: `${profile.fullName}: ${profile.headline}.${org} ${profile.field}, ${profile.location}. Profile in the BSA member directory.`,
     };
+  } catch (err) {
+    return { title: 'BSA Member Profile', description: 'Business Security Alliance member directory profile.' };
   }
-
-  const org = profile.privacy.showOrg ? ` ${profile.org}.` : '';
-
-  return {
-    title: `${profile.fullName} - ${profile.headline}`,
-    description: `${profile.fullName}: ${profile.headline}.${org} ${profile.field}, ${profile.location}. Profile in the BSA member directory.`,
-  };
 }
 
 /* -------------------------------------------------------------------------- */

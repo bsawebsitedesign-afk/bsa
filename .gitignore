@@ -17,6 +17,7 @@ dist
 # Local SQLite Database
 *.db
 *.db-journal
+!prisma/dev.db
 
 # Logs
 *.log

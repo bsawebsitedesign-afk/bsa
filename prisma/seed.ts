@@ -98,6 +98,211 @@ async function main() {
     include: { profile: true },
   });
 
+  /* --------------------------------------------------------------- 1B. PRACTITIONER MEMBERS */
+  console.log('◈ Seeding 6 Active BSA Executive & Practitioner Member Profiles…');
+
+  const defaultUserPasswordHash = await bcrypt.hash('Member@1011', 10);
+
+  const member01 = await prisma.user.create({
+    data: {
+      email: 'elena.rostova@apexsec.com',
+      passwordHash: defaultUserPasswordHash,
+      role: 'MEMBER',
+      status: 'ACTIVE',
+      emailVerified: true,
+      profile: {
+        create: {
+          fullName: 'Elena Rostova',
+          handle: 'elena-rostova',
+          jobTitle: 'Chief Information Security Officer',
+          headline: 'CISO leading cloud infrastructure & threat resilience at Apex Global.',
+          org: 'Apex Financial Systems',
+          field: 'Cybersecurity',
+          memberType: 'LEADER',
+          location: 'New York, NY, USA',
+          bio: '16+ years designing zero-trust cloud architectures and threat telemetry hubs across financial institutions.',
+          yearsExperience: 16,
+          specialties: JSON.stringify(['Cloud Security Architecture', 'Zero Trust Frameworks', 'Threat Intelligence', 'CISO Advisory']),
+          skills: JSON.stringify(['AWS Security', 'SIEM / SOAR Telemetry', 'ISO 27001', 'SOC 2 Type II Compliance']),
+          openToOpportunities: true,
+          openToMentoring: true,
+          openToSpeaking: true,
+          privacy: {
+            create: {
+              isPublic: true,
+              searchableInDirectory: true,
+              showEmail: true,
+              showPhone: false,
+              showOrg: true,
+              showLinkedIn: true,
+              showWebsite: true,
+            },
+          },
+        },
+      },
+    },
+  });
+
+  const member02 = await prisma.user.create({
+    data: {
+      email: 'marcus.vance@vance-defense.com',
+      passwordHash: defaultUserPasswordHash,
+      role: 'MEMBER',
+      status: 'ACTIVE',
+      emailVerified: true,
+      profile: {
+        create: {
+          fullName: 'Marcus Vance',
+          handle: 'marcus-vance',
+          jobTitle: 'VP of Physical & Executive Protection',
+          headline: 'Overseeing global corporate risk & executive protection programs.',
+          org: 'Vance Global Defense',
+          field: 'Corporate Security',
+          memberType: 'PROFESSIONAL',
+          location: 'Austin, TX, USA',
+          bio: 'Former military intelligence officer leading physical risk assessments, executive protection, and supply chain security.',
+          yearsExperience: 14,
+          specialties: JSON.stringify(['Executive Protection', 'Physical Perimeter Defense', 'Crisis Management', 'Supply Chain Security']),
+          skills: JSON.stringify(['Access Control Systems', 'Threat Vulnerability Assessment', 'Emergency Response', 'CCTV Analytics']),
+          openToOpportunities: false,
+          openToMentoring: true,
+          openToSpeaking: true,
+          privacy: {
+            create: {
+              isPublic: true,
+              searchableInDirectory: true,
+              showEmail: true,
+              showPhone: true,
+              showOrg: true,
+              showLinkedIn: true,
+              showWebsite: false,
+            },
+          },
+        },
+      },
+    },
+  });
+
+  const member03 = await prisma.user.create({
+    data: {
+      email: 'sarah.lin@quantumbio.com',
+      passwordHash: defaultUserPasswordHash,
+      role: 'MEMBER',
+      status: 'ACTIVE',
+      emailVerified: true,
+      profile: {
+        create: {
+          fullName: 'Sarah Lin',
+          handle: 'sarah-lin',
+          jobTitle: 'Head of Security Operations & Incident Response',
+          headline: 'Building NextGen SOC automation & incident response capabilities.',
+          org: 'Quantum BioLabs',
+          field: 'Risk Management',
+          memberType: 'PROFESSIONAL',
+          location: 'Los Angeles, CA, USA',
+          bio: 'Specialising in automated SOC workflows, threat hunting, and high-consequence breach investigation for biotech enterprises.',
+          yearsExperience: 11,
+          specialties: JSON.stringify(['SOC Automation', 'Incident Response', 'Malware Forensics', 'Threat Hunting']),
+          skills: JSON.stringify(['Python Security Tooling', 'Splunk / Sentinel', 'CrowdStrike Falcon', 'DFIR']),
+          openToOpportunities: true,
+          openToMentoring: true,
+          openToSpeaking: false,
+          privacy: {
+            create: {
+              isPublic: true,
+              searchableInDirectory: true,
+              showEmail: true,
+              showPhone: false,
+              showOrg: true,
+              showLinkedIn: true,
+              showWebsite: true,
+            },
+          },
+        },
+      },
+    },
+  });
+
+  const member04 = await prisma.user.create({
+    data: {
+      email: 'david.sterling@sterling-advisory.co.uk',
+      passwordHash: defaultUserPasswordHash,
+      role: 'MEMBER',
+      status: 'ACTIVE',
+      emailVerified: true,
+      profile: {
+        create: {
+          fullName: 'David Sterling',
+          handle: 'david-sterling',
+          jobTitle: 'Principal Security Governance Consultant',
+          headline: 'Advising Fortune 500 boards on regulatory compliance & enterprise risk.',
+          org: 'Sterling Advisory Partners',
+          field: 'Consulting',
+          memberType: 'CONSULTANT',
+          location: 'London, United Kingdom',
+          bio: 'Senior advisor assisting corporate boards with NIS2, GDPR compliance, and M&A cyber due diligence across EMEA.',
+          yearsExperience: 20,
+          specialties: JSON.stringify(['Board Level Risk Reporting', 'GDPR & NIS2 Governance', 'M&A Security Audits', 'Operational Resilience']),
+          skills: JSON.stringify(['NIST CSF', 'Enterprise Risk Frameworks', 'Regulatory Strategy', 'Audit Steering']),
+          openToOpportunities: true,
+          openToMentoring: false,
+          openToSpeaking: true,
+          privacy: {
+            create: {
+              isPublic: true,
+              searchableInDirectory: true,
+              showEmail: true,
+              showPhone: true,
+              showOrg: true,
+              showLinkedIn: true,
+              showWebsite: true,
+            },
+          },
+        },
+      },
+    },
+  });
+
+  const member05 = await prisma.user.create({
+    data: {
+      email: 'priya.sharma@cyberguard.tech',
+      passwordHash: defaultUserPasswordHash,
+      role: 'MEMBER',
+      status: 'ACTIVE',
+      emailVerified: true,
+      profile: {
+        create: {
+          fullName: 'Priya Sharma',
+          handle: 'priya-sharma',
+          jobTitle: 'Director of Product Security',
+          headline: 'DevSecOps advocate embedding security into CI/CD pipelines.',
+          org: 'CyberGuard Technologies',
+          field: 'Application Security',
+          memberType: 'VENDOR',
+          location: 'Miami, FL, USA',
+          bio: 'AppSec lead focused on container security, API protection, and zero-downtime security automation.',
+          yearsExperience: 12,
+          specialties: JSON.stringify(['DevSecOps', 'AppSec Architecture', 'Penetration Testing', 'API Gateway Security']),
+          skills: JSON.stringify(['Docker / K8s Hardening', 'Static & Dynamic Analysis', 'OAuth2 / SAML', 'OWASP Top 10']),
+          openToOpportunities: false,
+          openToMentoring: true,
+          openToSpeaking: true,
+          privacy: {
+            create: {
+              isPublic: true,
+              searchableInDirectory: true,
+              showEmail: true,
+              showPhone: false,
+              showOrg: true,
+              showLinkedIn: true,
+              showWebsite: true,
+            },
+          },
+        },
+      },
+    },
+  });
+
   /* --------------------------------------------------------------- 2. CHAPTERS */
   console.log('◆ Creating 5 Regional Chapters…');
 

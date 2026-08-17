@@ -4,6 +4,9 @@ const nextConfig = {
   poweredByHeader: false,
   experimental: {
     optimizePackageImports: ['@phosphor-icons/react'],
+    outputFileTracingIncludes: {
+      '/**/*': ['./prisma/dev.db', './prisma/schema.prisma'],
+    },
   },
 
   // Standalone output is what the Dockerfile copies into its runner stage, but

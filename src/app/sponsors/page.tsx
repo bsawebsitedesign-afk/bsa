@@ -108,22 +108,28 @@ function PerkStrip({ perk, size = 'md' }: { perk: string; size?: 'lg' | 'md' | '
 }
 
 export default async function SponsorsPage() {
-  const sponsors = await prisma.sponsor.findMany({
-    where: { isPublished: true },
-    orderBy: { createdAt: 'asc' },
-    select: {
-      id: true,
-      name: true,
-      logoUrl: true,
-      tier: true,
-      description: true,
-      websiteUrl: true,
-      ctaText: true,
-      ctaUrl: true,
-      isHiring: true,
-      perkText: true,
-    },
-  });
+  let sponsors: any[] = [];
+
+  try {
+    sponsors = await prisma.sponsor.findMany({
+      where: { isPublished: true },
+      orderBy: { createdAt: 'asc' },
+      select: {
+        id: true,
+        name: true,
+        logoUrl: true,
+        tier: true,
+        description: true,
+        websiteUrl: true,
+        ctaText: true,
+        ctaUrl: true,
+        isHiring: true,
+        perkText: true,
+      },
+    });
+  } catch (err) {
+    console.error('Sponsors DB Error on Serverless:', err);
+  }
 
   const byTier = TIERS.map((tier) => ({
     ...tier,

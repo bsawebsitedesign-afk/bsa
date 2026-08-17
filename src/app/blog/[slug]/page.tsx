@@ -156,45 +156,53 @@ export async function generateMetadata({ params }: { params: { slug: string } })
 }
 
 export default async function BlogPostPage({ params }: { params: { slug: string } }) {
-  const post = await prisma.blogPost.findFirst({
-    where: { slug: params.slug, isPublished: true },
-    select: {
-      id: true,
-      title: true,
-      summary: true,
-      content: true,
-      category: true,
-      tags: true,
-      imageUrl: true,
-      authorName: true,
-      authorTitle: true,
-      authorAvatar: true,
-      publishedAt: true,
-      readTimeMinutes: true,
-    },
-  });
+  let post: any = null;
+  let pool: any[] = [];
+
+  try {
+    post = await prisma.blogPost.findFirst({
+      where: { slug: params.slug, isPublished: true },
+      select: {
+        id: true,
+        title: true,
+        summary: true,
+        content: true,
+        category: true,
+        tags: true,
+        imageUrl: true,
+        authorName: true,
+        authorTitle: true,
+        authorAvatar: true,
+        publishedAt: true,
+        readTimeMinutes: true,
+      },
+    });
+
+    if (post) {
+      pool = await prisma.blogPost.findMany({
+        where: { isPublished: true, id: { not: post.id } },
+        orderBy: { publishedAt: 'desc' },
+        take: 12,
+        select: {
+          slug: true,
+          title: true,
+          summary: true,
+          category: true,
+          authorName: true,
+          authorAvatar: true,
+          publishedAt: true,
+          readTimeMinutes: true,
+        },
+      });
+    }
+  } catch (err) {
+    console.error('Blog Detail DB Error on Serverless:', err);
+  }
 
   if (!post) notFound();
 
   const tags = parseList(post.tags);
   const tone = toneFor(post.category);
-
-  const pool = await prisma.blogPost.findMany({
-    where: { isPublished: true, id: { not: post.id } },
-    orderBy: { publishedAt: 'desc' },
-    take: 12,
-    select: {
-      slug: true,
-      title: true,
-      summary: true,
-      category: true,
-      tags: true,
-      authorName: true,
-      authorAvatar: true,
-      readTimeMinutes: true,
-      publishedAt: true,
-    },
-  });
 
   // Same section first, then whatever shares tags, then plain recency.
   const related = [...pool]

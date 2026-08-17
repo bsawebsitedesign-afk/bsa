@@ -92,60 +92,66 @@ export async function generateMetadata({ params }: { params: { handle: string } 
 /* -------------------------------------------------------------------------- */
 
 export default async function MemberPage({ params }: { params: { handle: string } }) {
-  const profile = await prisma.memberProfile.findUnique({
-    where: { handle: params.handle },
-    select: {
-      userId: true,
-      fullName: true,
-      handle: true,
-      headline: true,
-      jobTitle: true,
-      org: true,
-      field: true,
-      memberType: true,
-      location: true,
-      bio: true,
-      yearsExperience: true,
-      avatarUrl: true,
-      linkedinUrl: true,
-      websiteUrl: true,
-      twitterUrl: true,
-      phone: true,
-      contactEmail: true,
-      specialties: true,
-      skills: true,
-      openToOpportunities: true,
-      openToMentoring: true,
-      openToSpeaking: true,
-      lastActiveAt: true,
-      createdAt: true,
-      privacy: {
-        select: {
-          isPublic: true,
-          showEmail: true,
-          showPhone: true,
-          showOrg: true,
-          showLinkedIn: true,
-          showWebsite: true,
+  let profile: any = null;
+
+  try {
+    profile = await prisma.memberProfile.findUnique({
+      where: { handle: params.handle },
+      select: {
+        userId: true,
+        fullName: true,
+        handle: true,
+        headline: true,
+        jobTitle: true,
+        org: true,
+        field: true,
+        memberType: true,
+        location: true,
+        bio: true,
+        yearsExperience: true,
+        avatarUrl: true,
+        linkedinUrl: true,
+        websiteUrl: true,
+        twitterUrl: true,
+        phone: true,
+        contactEmail: true,
+        specialties: true,
+        skills: true,
+        openToOpportunities: true,
+        openToMentoring: true,
+        openToSpeaking: true,
+        lastActiveAt: true,
+        createdAt: true,
+        privacy: {
+          select: {
+            isPublic: true,
+            showEmail: true,
+            showPhone: true,
+            showOrg: true,
+            showLinkedIn: true,
+            showWebsite: true,
+          },
         },
-      },
-      user: {
-        select: {
-          email: true,
-          memberships: {
-            orderBy: { joinedAt: 'asc' },
-            select: {
-              role: true,
-              joinedAt: true,
-              chapter: {
-                select: { slug: true, name: true, emoji: true, region: true, city: true, country: true },
+        user: {
+          select: {
+            email: true,
+            memberships: {
+              orderBy: { joinedAt: 'asc' },
+              select: {
+                role: true,
+                joinedAt: true,
+                chapter: {
+                  select: { slug: true, name: true, emoji: true, region: true, city: true, country: true },
+                },
               },
             },
           },
         },
       },
-    },
-  });
+    });
+  } catch (err) {
+    console.error('Member Profile DB Error on Serverless:', err);
+  }
 
   if (!profile || !profile.privacy?.isPublic) notFound();
 
@@ -232,7 +238,7 @@ export default async function MemberPage({ params }: { params: { handle: string 
 
   // Deduplicate chapters
   const seenChapters = new Set<string>();
-  const chapters = profile.user.memberships.filter((m) => {
+  const chapters = (profile.user.memberships ?? []).filter((m: any) => {
     if (seenChapters.has(m.chapter.slug)) return false;
     seenChapters.add(m.chapter.slug);
     return true;
@@ -610,7 +616,7 @@ export default async function MemberPage({ params }: { params: { handle: string 
                   <div className="p-6">
                     {chapters.length ? (
                       <ul className="space-y-3">
-                        {chapters.map((membership) => {
+                        {chapters.map((membership: any) => {
                           const icon = membership.chapter.emoji && membership.chapter.emoji !== '⬡' ? membership.chapter.emoji : '📍';
                           return (
                             <li key={membership.chapter.slug}>

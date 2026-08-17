@@ -45,56 +45,113 @@ export async function generateMetadata({ params }: { params: { slug: string } })
 }
 
 export default async function ChapterPage({ params }: { params: { slug: string } }) {
-  const [chapter, session] = await Promise.all([
-    prisma.chapter.findUnique({
-      where: { slug: params.slug },
-      select: {
-        id: true,
-        slug: true,
-        name: true,
-        region: true,
-        city: true,
-        country: true,
-        description: true,
-        emoji: true,
-        accent: true,
-        foundedYear: true,
-        meetingCadence: true,
-        linkedinUrl: true,
-        contactEmail: true,
-        isActive: true,
-        memberships: {
-          orderBy: { joinedAt: 'asc' },
-          select: {
-            id: true,
-            role: true,
-            userId: true,
-            joinedAt: true,
-            user: {
-              select: {
-                profile: {
-                  select: {
-                    handle: true,
-                    fullName: true,
-                    headline: true,
-                    jobTitle: true,
-                    org: true,
-                    field: true,
-                    location: true,
-                    avatarUrl: true,
-                    openToMentoring: true,
-                    openToSpeaking: true,
-                    privacy: { select: { isPublic: true, showOrg: true } },
+  let chapter: any = null;
+  let session: any = null;
+  let cityEvents: any[] = [];
+  let others: any[] = [];
+
+  try {
+    const fetched = await Promise.all([
+      prisma.chapter.findUnique({
+        where: { slug: params.slug },
+        select: {
+          id: true,
+          slug: true,
+          name: true,
+          region: true,
+          city: true,
+          country: true,
+          description: true,
+          emoji: true,
+          accent: true,
+          foundedYear: true,
+          meetingCadence: true,
+          linkedinUrl: true,
+          contactEmail: true,
+          isActive: true,
+          memberships: {
+            orderBy: { joinedAt: 'asc' },
+            select: {
+              id: true,
+              role: true,
+              userId: true,
+              joinedAt: true,
+              user: {
+                select: {
+                  profile: {
+                    select: {
+                      handle: true,
+                      fullName: true,
+                      headline: true,
+                      jobTitle: true,
+                      org: true,
+                      field: true,
+                      location: true,
+                      avatarUrl: true,
+                      openToMentoring: true,
+                      openToSpeaking: true,
+                      privacy: { select: { isPublic: true, showOrg: true } },
+                    },
                   },
                 },
               },
             },
           },
         },
-      },
-    }),
-    getSession(),
-  ]);
+      }),
+      getSession(),
+    ]);
+
+    chapter = fetched[0];
+    session = fetched[1];
+
+    if (chapter) {
+      const eventsFetched = await Promise.all([
+        prisma.event.findMany({
+          where: {
+            status: { in: ['UPCOMING', 'LIVE'] },
+            eventDate: { gte: new Date() },
+            location: { contains: chapter.city },
+          },
+          orderBy: { eventDate: 'asc' },
+          take: 3,
+          select: {
+            slug: true,
+            title: true,
+            category: true,
+            eventDate: true,
+            startTime: true,
+            location: true,
+            locationType: true,
+            venueName: true,
+            cpdHours: true,
+            isPaid: true,
+          },
+        }),
+        prisma.chapter.findMany({
+          where: { isActive: true, slug: { not: chapter.slug } },
+          orderBy: { region: 'asc' },
+          take: 3,
+          select: {
+            slug: true,
+            name: true,
+            region: true,
+            city: true,
+            country: true,
+            emoji: true,
+            accent: true,
+            description: true,
+            meetingCadence: true,
+            _count: { select: { memberships: true } },
+          },
+        }),
+      ]);
+      cityEvents = eventsFetched[0];
+      others = eventsFetched[1];
+    }
+  } catch (err) {
+    console.error('Chapter Detail DB Error on Serverless:', err);
+  }
 
   if (!chapter) notFound();
 
@@ -105,59 +162,17 @@ export default async function ChapterPage({ params }: { params: { slug: string }
 
   /* Privacy: only members who keep a public profile appear on the roster. */
   const roster = chapter.memberships
-    .filter((m) => m.user.profile?.privacy?.isPublic)
-    .map((m) => ({ id: m.id, role: m.role, profile: m.user.profile! }))
-    .sort((a, b) => {
+    .filter((m: any) => m.user.profile?.privacy?.isPublic)
+    .map((m: any) => ({ id: m.id, role: m.role, profile: m.user.profile! }))
+    .sort((a: any, b: any) => {
       const byRole = (ROLE_RANK[a.role] ?? 9) - (ROLE_RANK[b.role] ?? 9);
       return byRole !== 0 ? byRole : a.profile.fullName.localeCompare(b.profile.fullName);
     });
 
   const hiddenCount = totalMembers - roster.length;
-  const chairCount = chapter.memberships.filter((m) => m.role === 'CHAIR').length;
-  const committeeCount = chapter.memberships.filter((m) => m.role === 'COMMITTEE').length;
-
-  const myMembership = session ? (chapter.memberships.find((m) => m.userId === session.userId) ?? null) : null;
-
-  const [cityEvents, others] = await Promise.all([
-    prisma.event.findMany({
-      where: {
-        status: { in: ['UPCOMING', 'LIVE'] },
-        eventDate: { gte: new Date() },
-        location: { contains: chapter.city },
-      },
-      orderBy: { eventDate: 'asc' },
-      take: 3,
-      select: {
-        slug: true,
-        title: true,
-        category: true,
-        eventDate: true,
-        startTime: true,
-        location: true,
-        locationType: true,
-        venueName: true,
-        cpdHours: true,
-        isPaid: true,
-      },
-    }),
-    prisma.chapter.findMany({
-      where: { isActive: true, slug: { not: chapter.slug } },
-      orderBy: { region: 'asc' },
-      take: 3,
-      select: {
-        slug: true,
-        name: true,
-        region: true,
-        city: true,
-        country: true,
-        emoji: true,
-        accent: true,
-        description: true,
-        meetingCadence: true,
-        _count: { select: { memberships: true } },
-      },
-    }),
-  ]);
+  const chairCount = chapter.memberships.filter((m: any) => m.role === 'CHAIR').length;
+  const committeeCount = chapter.memberships.filter((m: any) => m.role === 'COMMITTEE').length;
+  const myMembership = session ? (chapter.memberships.find((m: any) => m.userId === session.userId) ?? null) : null;
 
   const yearsRunning = Math.max(0, new Date().getFullYear() - chapter.foundedYear);
 
@@ -472,7 +487,7 @@ export default async function ChapterPage({ params }: { params: { slug: string }
             />
           ) : (
             <RevealGroup className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-              {roster.map((member) => {
+              {roster.map((member: any) => {
                 const isChair = member.role === 'CHAIR';
                 const isCommittee = member.role === 'COMMITTEE';
                 const showOrg = member.profile.privacy?.showOrg && member.profile.org;

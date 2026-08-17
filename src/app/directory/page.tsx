@@ -34,35 +34,44 @@ export default async function DirectoryPage({
 }: {
   searchParams?: { mentors?: string; type?: string; q?: string };
 }) {
-  const [profiles, chapterCount] = await Promise.all([
-    prisma.memberProfile.findMany({
-      where: { user: { status: 'ACTIVE', role: { not: 'ADMIN' } }, privacy: { searchableInDirectory: true, isPublic: true } },
-      orderBy: { fullName: 'asc' },
-      // Nothing here is private: no email, no phone, no privacy-gated links.
-      select: {
-        userId: true,
-        handle: true,
-        fullName: true,
-        headline: true,
-        jobTitle: true,
-        org: true,
-        field: true,
-        memberType: true,
-        location: true,
-        avatarUrl: true,
-        yearsExperience: true,
-        specialties: true,
-        skills: true,
-        openToOpportunities: true,
-        openToMentoring: true,
-        openToSpeaking: true,
-        lastActiveAt: true,
-        createdAt: true,
-        privacy: { select: { showOrg: true } },
-      },
-    }),
-    prisma.chapter.count({ where: { isActive: true } }),
-  ]);
+  let profiles: any[] = [];
+  let chapterCount = 0;
+
+  try {
+    const fetched = await Promise.all([
+      prisma.memberProfile.findMany({
+        where: { user: { status: 'ACTIVE', role: { not: 'ADMIN' } }, privacy: { searchableInDirectory: true, isPublic: true } },
+        orderBy: { fullName: 'asc' },
+        // Nothing here is private: no email, no phone, no privacy-gated links.
+        select: {
+          userId: true,
+          handle: true,
+          fullName: true,
+          headline: true,
+          jobTitle: true,
+          org: true,
+          field: true,
+          memberType: true,
+          location: true,
+          avatarUrl: true,
+          yearsExperience: true,
+          specialties: true,
+          skills: true,
+          openToOpportunities: true,
+          openToMentoring: true,
+          openToSpeaking: true,
+          lastActiveAt: true,
+          createdAt: true,
+          privacy: { select: { showOrg: true } },
+        },
+      }),
+      prisma.chapter.count({ where: { isActive: true } }),
+    ]);
+    profiles = fetched[0];
+    chapterCount = fetched[1];
+  } catch (err) {
+    console.error('Directory DB Error on Serverless:', err);
+  }
 
   const members: DirectoryMember[] = profiles.map((p) => ({
     userId: p.userId,

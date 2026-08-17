@@ -60,41 +60,45 @@ const LEVEL_BLURB: Record<string, string> = {
 
 export default async function ResourcesPage() {
   const session = await getSession();
-
-  const resources = await prisma.resource.findMany({
-    where: { isPublished: true },
-    orderBy: { sortOrder: 'asc' },
-    select: {
-      id: true,
-      slug: true,
-      title: true,
-      summary: true,
-      description: true,
-      imageUrl: true,
-      level: true,
-      accent: true,
-      emoji: true,
-      estHours: true,
-      modules: { select: { minutes: true } },
-    },
-  });
-
-  /* How many modules of each resource this member has already read. */
+  let resources: any[] = [];
   const doneByResource = new Map<string, number>();
-  if (session) {
-    const rows = await prisma.resourceProgress.findMany({
-      where: { userId: session.userId },
-      select: { module: { select: { resourceId: true } } },
+
+  try {
+    resources = await prisma.resource.findMany({
+      where: { isPublished: true },
+      orderBy: { sortOrder: 'asc' },
+      select: {
+        id: true,
+        slug: true,
+        title: true,
+        summary: true,
+        description: true,
+        imageUrl: true,
+        level: true,
+        accent: true,
+        emoji: true,
+        estHours: true,
+        modules: { select: { minutes: true } },
+      },
     });
-    for (const row of rows) {
-      const id = row.module.resourceId;
-      doneByResource.set(id, (doneByResource.get(id) ?? 0) + 1);
+
+    if (session) {
+      const rows = await prisma.resourceProgress.findMany({
+        where: { userId: session.userId },
+        select: { module: { select: { resourceId: true } } },
+      });
+      for (const row of rows) {
+        const id = row.module.resourceId;
+        doneByResource.set(id, (doneByResource.get(id) ?? 0) + 1);
+      }
     }
+  } catch (err) {
+    console.error('Resources DB Error on Serverless:', err);
   }
 
-  const totalModules = resources.reduce((sum, r) => sum + r.modules.length, 0);
-  const totalMinutes = resources.reduce((sum, r) => sum + r.modules.reduce((m, mod) => m + mod.minutes, 0), 0);
-  const totalDone = Array.from(doneByResource.values()).reduce((a, b) => a + b, 0);
+  const totalModules = resources.reduce((sum: number, r: any) => sum + (r.modules?.length ?? 0), 0);
+  const totalMinutes = resources.reduce((sum: number, r: any) => sum + (r.modules ?? []).reduce((m: number, mod: any) => m + mod.minutes, 0), 0);
+  const totalDone = Array.from(doneByResource.values()).reduce((a: number, b: number) => a + b, 0);
 
   const levelsPresent = Array.from(new Set(resources.map((r) => r.level)));
 
@@ -303,8 +307,8 @@ export default async function ResourcesPage() {
             <RevealGroup className="grid grid-cols-1 gap-6 md:grid-cols-2">
               {resources.map((resource) => {
                 const accent = resolveAccent(resource.accent, resource.slug);
-                const moduleCount = resource.modules.length;
-                const minutes = resource.modules.reduce((sum, m) => sum + m.minutes, 0);
+                const moduleCount = resource.modules?.length ?? 0;
+                const minutes = (resource.modules ?? []).reduce((sum: number, m: any) => sum + m.minutes, 0);
                 const done = doneByResource.get(resource.id) ?? 0;
                 const pct = percent(done, moduleCount);
 

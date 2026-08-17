@@ -95,28 +95,33 @@ function renderRich(text: string): React.ReactNode[] {
 }
 
 async function loadOpportunity(slug: string) {
-  return prisma.opportunity.findUnique({
-    where: { slug },
-    select: {
-      id: true,
-      slug: true,
-      title: true,
-      org: true,
-      logoUrl: true,
-      coverImageUrl: true,
-      type: true,
-      locationType: true,
-      location: true,
-      compensation: true,
-      description: true,
-      requirements: true,
-      applyUrl: true,
-      deadline: true,
-      postedAt: true,
-      isPublished: true,
-      _count: { select: { applications: true } },
-    },
-  });
+  try {
+    return await prisma.opportunity.findUnique({
+      where: { slug },
+      select: {
+        id: true,
+        slug: true,
+        title: true,
+        org: true,
+        logoUrl: true,
+        coverImageUrl: true,
+        type: true,
+        locationType: true,
+        location: true,
+        compensation: true,
+        description: true,
+        requirements: true,
+        applyUrl: true,
+        deadline: true,
+        postedAt: true,
+        isPublished: true,
+        _count: { select: { applications: true } },
+      },
+    });
+  } catch (err) {
+    console.error('Opportunity detail DB Error on Serverless:', err);
+    return null;
+  }
 }
 
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
@@ -151,36 +156,47 @@ export default async function OpportunityPage({ params }: { params: { slug: stri
   if (!opportunity || !opportunity.isPublished) notFound();
 
   const session = await getSession();
+  let profile: any = null;
+  let existing: any = null;
+  let nearby: any[] = [];
 
-  const [profile, existing, nearby] = await Promise.all([
-    session
-      ? prisma.memberProfile.findUnique({
-          where: { userId: session.userId },
-          select: { fullName: true, org: true, linkedinUrl: true },
-        })
-      : Promise.resolve(null),
-    session
-      ? prisma.application.findUnique({
-          where: { opportunityId_email: { opportunityId: opportunity.id, email: session.email } },
-          select: { id: true },
-        })
-      : Promise.resolve(null),
-    prisma.opportunity.findMany({
-      where: { isPublished: true, slug: { not: opportunity.slug } },
-      orderBy: { postedAt: 'desc' },
-      take: 9,
-      select: {
-        slug: true,
-        title: true,
-        org: true,
-        logoUrl: true,
-        type: true,
-        location: true,
-        compensation: true,
-        deadline: true,
-      },
-    }),
-  ]);
+  try {
+    const fetched = await Promise.all([
+      session
+        ? prisma.memberProfile.findUnique({
+            where: { userId: session.userId },
+            select: { fullName: true, org: true, linkedinUrl: true },
+          })
+        : Promise.resolve(null),
+      session
+        ? prisma.application.findUnique({
+            where: { opportunityId_email: { opportunityId: opportunity.id, email: session.email } },
+            select: { id: true },
+          })
+        : Promise.resolve(null),
+      prisma.opportunity.findMany({
+        where: { isPublished: true, slug: { not: opportunity.slug } },
+        orderBy: { postedAt: 'desc' },
+        take: 9,
+        select: {
+          slug: true,
+          title: true,
+          org: true,
+          logoUrl: true,
+          type: true,
+          location: true,
+          compensation: true,
+          deadline: true,
+        },
+      }),
+    ]);
+
+    profile = fetched[0];
+    existing = fetched[1];
+    nearby = fetched[2];
+  } catch (err) {
+    console.error('Opportunity Page DB Error on Serverless:', err);
+  }
 
   // Same kind of listing first, then whatever else is newest.
   const related = [...nearby]

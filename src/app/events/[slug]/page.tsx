@@ -84,35 +84,42 @@ export async function generateMetadata({ params }: { params: { slug: string } })
 /* -------------------------------------------------------------------------- */
 
 export default async function EventDetailPage({ params }: { params: { slug: string } }) {
-  const event = await prisma.event.findUnique({
-    where: { slug: params.slug },
-    include: {
-      tickets: { orderBy: { price: 'asc' } },
-      speakers: true,
-      sponsors: { include: { sponsor: true } },
-      _count: { select: { registrations: true } },
-    },
-  });
-
-  if (!event || event.status === 'DRAFT') notFound();
-
+  let event: any = null;
+  let profile: any = null;
+  let existingRegistration: any = null;
   const session = await getSession();
 
-  const [profile, existingRegistration] = await Promise.all([
-    session
-      ? prisma.memberProfile.findUnique({ where: { userId: session.userId }, select: { fullName: true, org: true } })
-      : Promise.resolve(null),
-    session
-      ? prisma.eventRegistration.findUnique({
+  try {
+    event = await prisma.event.findUnique({
+      where: { slug: params.slug },
+      include: {
+        tickets: { orderBy: { price: 'asc' } },
+        speakers: true,
+        sponsors: { include: { sponsor: true } },
+        _count: { select: { registrations: true } },
+      },
+    });
+
+    if (event && session) {
+      const fetched = await Promise.all([
+        prisma.memberProfile.findUnique({ where: { userId: session.userId }, select: { fullName: true, org: true } }),
+        prisma.eventRegistration.findUnique({
           where: { eventId_attendeeEmail: { eventId: event.id, attendeeEmail: session.email } },
           select: {
             registrationCode: true,
             status: true,
             payments: { where: { status: 'PENDING' }, select: { transactionId: true }, take: 1 },
           },
-        })
-      : Promise.resolve(null),
-  ]);
+        }),
+      ]);
+      profile = fetched[0];
+      existingRegistration = fetched[1];
+    }
+  } catch (err) {
+    console.error('Event Detail DB Error on Serverless:', err);
+  }
+
+  if (!event || event.status === 'DRAFT') notFound();
 
   const agenda = parseJson<AgendaItem[]>(event.agendaJson, []).filter((item) => item && item.title);
   const registrations = event._count.registrations;
@@ -121,7 +128,7 @@ export default async function EventDetailPage({ params }: { params: { slug: stri
   const live = event.status === 'LIVE';
   const completed = event.status === 'COMPLETED';
 
-  const tickets: TicketOption[] = event.tickets.map((ticket) => ({
+  const tickets: TicketOption[] = (event.tickets ?? []).map((ticket: any) => ({
     id: ticket.id,
     name: ticket.name,
     price: ticket.price,
@@ -380,7 +387,7 @@ export default async function EventDetailPage({ params }: { params: { slug: stri
                 </div>
 
                 <RevealGroup className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  {event.speakers.map((speaker) => (
+                  {(event.speakers ?? []).map((speaker: any) => (
                     <RevealItem key={speaker.id}>
                       <div className="h-full rounded-2xl border border-white/20 bg-surface/95 p-5 shadow-[0_10px_30px_rgba(0,0,0,0.5)] transition-all duration-300 hover:border-cyan/80">
                         <div className="flex items-start gap-4">

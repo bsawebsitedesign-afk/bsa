@@ -62,61 +62,73 @@ export async function generateMetadata({ params }: { params: { slug: string } })
 }
 
 export default async function ResourcePage({ params }: { params: { slug: string } }) {
-  const [resource, session] = await Promise.all([
-    prisma.resource.findUnique({
-      where: { slug: params.slug },
-      select: {
-        id: true,
-        slug: true,
-        title: true,
-        summary: true,
-        description: true,
-        level: true,
-        accent: true,
-        emoji: true,
-        estHours: true,
-        isPublished: true,
-        modules: {
-          orderBy: { sortOrder: 'asc' },
-          select: {
-            id: true,
-            title: true,
-            summary: true,
-            content: true,
-            minutes: true,
-            resourceUrl: true,
+  let resource: any = null;
+  let session: any = null;
+  const completedModuleIds = new Set<string>();
+
+  try {
+    const fetched = await Promise.all([
+      prisma.resource.findUnique({
+        where: { slug: params.slug },
+        select: {
+          id: true,
+          slug: true,
+          title: true,
+          summary: true,
+          description: true,
+          level: true,
+          accent: true,
+          emoji: true,
+          estHours: true,
+          isPublished: true,
+          modules: {
+            orderBy: { sortOrder: 'asc' },
+            select: {
+              id: true,
+              title: true,
+              summary: true,
+              content: true,
+              minutes: true,
+              resourceUrl: true,
+            },
           },
         },
-      },
-    }),
-    getSession(),
-  ]);
+      }),
+      getSession(),
+    ]);
+
+    resource = fetched[0];
+    session = fetched[1];
+
+    if (resource && session) {
+      const moduleIds = resource.modules.map((m: any) => m.id);
+      const rows = await prisma.resourceProgress.findMany({
+        where: { userId: session.userId, moduleId: { in: moduleIds } },
+        select: { moduleId: true },
+      });
+      for (const row of rows) completedModuleIds.add(row.moduleId);
+    }
+  } catch (err) {
+    console.error('Resource Detail DB Error on Serverless:', err);
+  }
 
   if (!resource || !resource.isPublished) notFound();
 
-  const completedIds: string[] = session
-    ? (
-        await prisma.resourceProgress.findMany({
-          where: { userId: session.userId, module: { resourceId: resource.id } },
-          select: { moduleId: true },
-        })
-      ).map((p) => p.moduleId)
-    : [];
-
-  const completedSet = new Set(completedIds);
+  const completedSet = completedModuleIds;
+  const completedIds = Array.from(completedSet);
 
   const accent = resolveAccent(resource.accent, resource.slug);
   const tint = accentClasses[accent];
 
   const totalModules = resource.modules.length;
-  const doneModules = resource.modules.filter((m) => completedSet.has(m.id)).length;
+  const doneModules = resource.modules.filter((m: any) => completedSet.has(m.id)).length;
   const pct = percent(doneModules, totalModules);
-  const totalMinutes = resource.modules.reduce((sum, m) => sum + m.minutes, 0);
+  const totalMinutes = resource.modules.reduce((sum: number, m: any) => sum + m.minutes, 0);
   const remainingMinutes = resource.modules
-    .filter((m) => !completedSet.has(m.id))
-    .reduce((sum, m) => sum + m.minutes, 0);
+    .filter((m: any) => !completedSet.has(m.id))
+    .reduce((sum: number, m: any) => sum + m.minutes, 0);
 
-  const firstIncomplete = resource.modules.find((m) => !completedSet.has(m.id)) ?? null;
+  const firstIncomplete = resource.modules.find((m: any) => !completedSet.has(m.id)) ?? null;
   const firstIncompleteIndex = firstIncomplete ? resource.modules.indexOf(firstIncomplete) : -1;
 
   const others = await prisma.resource.findMany({
@@ -207,7 +219,7 @@ export default async function ResourcePage({ params }: { params: { slug: string 
                       In this resource
                     </p>
                     <ol className="mt-4 space-y-3">
-                      {resource.modules.map((m, i) => (
+                      {(resource.modules ?? []).map((m: any, i: number) => (
                         <li key={m.id} className="flex items-start gap-3">
                           <span
                             aria-hidden

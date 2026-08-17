@@ -38,26 +38,32 @@ export default async function BlogPage({
 }: {
   searchParams?: { category?: string | string[]; tag?: string | string[] };
 }) {
-  const posts = await prisma.blogPost.findMany({
-    where: { isPublished: true },
-    orderBy: { publishedAt: 'desc' },
-    select: {
-      id: true,
-      slug: true,
-      title: true,
-      summary: true,
-      content: true,
-      category: true,
-      tags: true,
-      imageUrl: true,
-      authorName: true,
-      authorTitle: true,
-      authorAvatar: true,
-      readTimeMinutes: true,
-      publishedAt: true,
-      isFeatured: true,
-    },
-  });
+  let posts: any[] = [];
+
+  try {
+    posts = await prisma.blogPost.findMany({
+      where: { isPublished: true },
+      orderBy: { publishedAt: 'desc' },
+      select: {
+        id: true,
+        slug: true,
+        title: true,
+        summary: true,
+        content: true,
+        category: true,
+        tags: true,
+        imageUrl: true,
+        authorName: true,
+        authorTitle: true,
+        authorAvatar: true,
+        readTimeMinutes: true,
+        publishedAt: true,
+        isFeatured: true,
+      },
+    });
+  } catch (err) {
+    console.error('Blog DB Error on Serverless:', err);
+  }
 
   const now = Date.now();
 

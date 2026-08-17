@@ -65,47 +65,58 @@ const CHAPTER_ROLES = [
 ];
 
 export default async function ChaptersPage() {
-  const [chapters, chairs, totalMembers] = await Promise.all([
-    prisma.chapter.findMany({
-      where: { isActive: true },
-      orderBy: [{ region: 'asc' }, { city: 'asc' }],
-      select: {
-        slug: true,
-        name: true,
-        region: true,
-        city: true,
-        country: true,
-        description: true,
-        imageUrl: true,
-        emoji: true,
-        accent: true,
-        foundedYear: true,
-        meetingCadence: true,
-        _count: { select: { memberships: true } },
-      },
-    }),
-    prisma.chapterMembership.findMany({
-      where: {
-        role: 'CHAIR',
-        chapter: { isActive: true },
-        user: { profile: { privacy: { isPublic: true } } },
-      },
-      orderBy: { joinedAt: 'asc' },
-      take: 8,
-      select: {
-        id: true,
-        chapter: { select: { emoji: true, region: true } },
-        user: {
-          select: {
-            profile: {
-              select: { handle: true, fullName: true, avatarUrl: true, jobTitle: true, org: true, headline: true },
+  let chapters: any[] = [];
+  let chairs: any[] = [];
+  let totalMembers = 0;
+
+  try {
+    const fetched = await Promise.all([
+      prisma.chapter.findMany({
+        where: { isActive: true },
+        orderBy: [{ region: 'asc' }, { city: 'asc' }],
+        select: {
+          slug: true,
+          name: true,
+          region: true,
+          city: true,
+          country: true,
+          description: true,
+          imageUrl: true,
+          emoji: true,
+          accent: true,
+          foundedYear: true,
+          meetingCadence: true,
+          _count: { select: { memberships: true } },
+        },
+      }),
+      prisma.chapterMembership.findMany({
+        where: {
+          role: 'CHAIR',
+          chapter: { isActive: true },
+          user: { profile: { privacy: { isPublic: true } } },
+        },
+        orderBy: { joinedAt: 'asc' },
+        take: 8,
+        select: {
+          id: true,
+          chapter: { select: { emoji: true, region: true } },
+          user: {
+            select: {
+              profile: {
+                select: { handle: true, fullName: true, avatarUrl: true, jobTitle: true, org: true },
+              },
             },
           },
         },
-      },
-    }),
-    prisma.chapterMembership.count({ where: { chapter: { isActive: true } } }),
-  ]);
+      }),
+      prisma.chapterMembership.count({ where: { chapter: { isActive: true } } }),
+    ]);
+    chapters = fetched[0];
+    chairs = fetched[1];
+    totalMembers = fetched[2];
+  } catch (err) {
+    console.error('Chapters DB Error on Serverless:', err);
+  }
 
   const regions = Array.from(new Set(chapters.map((c) => c.region))).sort((a, b) => a.localeCompare(b));
   const countries = Array.from(new Set(chapters.map((c) => c.country)));

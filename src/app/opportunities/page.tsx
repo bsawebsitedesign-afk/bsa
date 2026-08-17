@@ -81,24 +81,30 @@ function blurbOf(description: string): string {
 }
 
 export default async function OpportunitiesPage({ searchParams }: { searchParams?: { type?: string | string[] } }) {
-  const rows = await prisma.opportunity.findMany({
-    where: { isPublished: true },
-    orderBy: { postedAt: 'desc' },
-    select: {
-      slug: true,
-      title: true,
-      org: true,
-      logoUrl: true,
-      type: true,
-      locationType: true,
-      location: true,
-      compensation: true,
-      description: true,
-      deadline: true,
-      postedAt: true,
-      _count: { select: { applications: true } },
-    },
-  });
+  let rows: any[] = [];
+
+  try {
+    rows = await prisma.opportunity.findMany({
+      where: { isPublished: true },
+      orderBy: { postedAt: 'desc' },
+      select: {
+        slug: true,
+        title: true,
+        org: true,
+        logoUrl: true,
+        type: true,
+        locationType: true,
+        location: true,
+        compensation: true,
+        description: true,
+        deadline: true,
+        postedAt: true,
+        _count: { select: { applications: true } },
+      },
+    });
+  } catch (err) {
+    console.error('Opportunities DB Error on Serverless:', err);
+  }
 
   const listings: BoardListing[] = rows.map((row) => ({
     slug: row.slug,

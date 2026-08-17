@@ -118,11 +118,22 @@ export default async function ContactPage({ searchParams }: { searchParams?: { t
   const initialType = resolveType(searchParams?.type);
   const session = await getSession();
 
-  const [chapterCount, mentorCount, memberCount] = await Promise.all([
-    prisma.chapter.count({ where: { isActive: true } }),
-    prisma.memberProfile.count({ where: { openToMentoring: true } }),
-    prisma.memberProfile.count(),
-  ]);
+  let chapterCount = 0;
+  let mentorCount = 0;
+  let memberCount = 0;
+
+  try {
+    const fetched = await Promise.all([
+      prisma.chapter.count({ where: { isActive: true } }),
+      prisma.memberProfile.count({ where: { openToMentoring: true } }),
+      prisma.memberProfile.count(),
+    ]);
+    chapterCount = fetched[0];
+    mentorCount = fetched[1];
+    memberCount = fetched[2];
+  } catch (err) {
+    console.error('Contact Page DB Error:', err);
+  }
 
   const active = REASONS.find((reason) => reason.value === initialType) ?? REASONS[0];
 

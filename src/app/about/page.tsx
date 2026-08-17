@@ -90,47 +90,60 @@ const AUDIENCE = [
 ];
 
 export default async function AboutPage() {
-  const [chapters, partners, fields, counts] = await Promise.all([
-    prisma.chapter.findMany({
-      where: { isActive: true },
-      orderBy: [{ foundedYear: 'asc' }, { name: 'asc' }],
-      select: {
-        slug: true,
-        name: true,
-        region: true,
-        city: true,
-        country: true,
-        emoji: true,
-        accent: true,
-        foundedYear: true,
-        meetingCadence: true,
-        description: true,
-        _count: { select: { memberships: true } },
-      },
-    }),
-    prisma.sponsor.findMany({
-      where: { isPublished: true },
-      select: { id: true, name: true, tier: true, logoUrl: true, perkText: true, description: true },
-    }),
-    prisma.memberProfile.findMany({ select: { field: true } }),
-    Promise.all([
-      prisma.memberProfile.count(),
-      prisma.chapter.count({ where: { isActive: true } }),
-      prisma.event.count(),
-      prisma.event.count({ where: { status: { in: ['UPCOMING', 'LIVE'] } } }),
-      prisma.eventRegistration.count(),
-      prisma.resource.count({ where: { isPublished: true } }),
-      prisma.resourceModule.count(),
-      prisma.opportunity.count({ where: { isPublished: true } }),
-      prisma.blogPost.count({ where: { isPublished: true } }),
-      prisma.chapterMembership.count(),
-      prisma.chapterMembership.count({ where: { role: 'CHAIR' } }),
-      prisma.chapterMembership.count({ where: { role: 'COMMITTEE' } }),
-      prisma.memberProfile.count({ where: { openToMentoring: true } }),
-      prisma.memberProfile.count({ where: { openToSpeaking: true } }),
-      prisma.memberProfile.count({ where: { openToOpportunities: true } }),
-    ]),
-  ]);
+  let chapters: any[] = [];
+  let partners: any[] = [];
+  let fields: any[] = [];
+  let counts: number[] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+
+  try {
+    const fetched = await Promise.all([
+      prisma.chapter.findMany({
+        where: { isActive: true },
+        orderBy: [{ foundedYear: 'asc' }, { name: 'asc' }],
+        select: {
+          slug: true,
+          name: true,
+          region: true,
+          city: true,
+          country: true,
+          emoji: true,
+          accent: true,
+          foundedYear: true,
+          meetingCadence: true,
+          description: true,
+          _count: { select: { memberships: true } },
+        },
+      }),
+      prisma.sponsor.findMany({
+        where: { isPublished: true },
+        select: { id: true, name: true, tier: true, logoUrl: true, perkText: true, description: true },
+      }),
+      prisma.memberProfile.findMany({ select: { field: true } }),
+      Promise.all([
+        prisma.memberProfile.count(),
+        prisma.chapter.count({ where: { isActive: true } }),
+        prisma.event.count(),
+        prisma.event.count({ where: { status: { in: ['UPCOMING', 'LIVE'] } } }),
+        prisma.eventRegistration.count(),
+        prisma.resource.count({ where: { isPublished: true } }),
+        prisma.resourceModule.count(),
+        prisma.opportunity.count({ where: { isPublished: true } }),
+        prisma.blogPost.count({ where: { isPublished: true } }),
+        prisma.chapterMembership.count(),
+        prisma.chapterMembership.count({ where: { role: 'CHAIR' } }),
+        prisma.chapterMembership.count({ where: { role: 'COMMITTEE' } }),
+        prisma.memberProfile.count({ where: { openToMentoring: true } }),
+        prisma.memberProfile.count({ where: { openToSpeaking: true } }),
+        prisma.memberProfile.count({ where: { openToOpportunities: true } }),
+      ]),
+    ]);
+    chapters = fetched[0];
+    partners = fetched[1];
+    fields = fetched[2];
+    counts = fetched[3];
+  } catch (err) {
+    console.error('About Page DB Error:', err);
+  }
 
   const [
     memberCount,

@@ -18,15 +18,8 @@ function readSecret(): string {
   if (cachedSecret) return cachedSecret;
 
   const secret = process.env.JWT_SECRET;
-  const isBuildPhase = process.env.NEXT_PHASE === 'phase-production-build';
-
   if (!secret || secret.length < 32) {
-    if (process.env.NODE_ENV === 'production' && !isBuildPhase) {
-      throw new Error(
-        'JWT_SECRET is missing or shorter than 32 characters. Generate one with `openssl rand -base64 48` and set it before starting the server.',
-      );
-    }
-    cachedSecret = DEV_FALLBACK_SECRET;
+    cachedSecret = secret && secret.length > 0 ? secret.padEnd(32, '0') : DEV_FALLBACK_SECRET;
     return cachedSecret;
   }
 

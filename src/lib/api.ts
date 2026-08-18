@@ -93,7 +93,8 @@ export function route<C = unknown>(handler: Handler<C>): Handler<C> {
       }
 
       console.error('[api]', err);
-      return jsonError(env.isDev && err instanceof Error ? err.message : 'Something broke on our end. Try again.', 500);
+      const msg = err instanceof Error ? err.message : 'Something broke on our end. Try again.';
+      return jsonError(msg, 500);
     }
   };
 }

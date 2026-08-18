@@ -5,7 +5,7 @@ const nextConfig = {
   experimental: {
     optimizePackageImports: ['@phosphor-icons/react'],
     outputFileTracingIncludes: {
-      '/**/*': ['./prisma/dev.db', './prisma/schema.prisma'],
+      '/**/*': ['./prisma/schema.prisma'],
     },
   },
 

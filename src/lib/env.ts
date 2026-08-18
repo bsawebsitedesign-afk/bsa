@@ -35,7 +35,7 @@ export const env = {
   isDev: process.env.NODE_ENV !== 'production',
 
   /** Absolute origin, used for emails, payment redirects and sitemap URLs. */
-  appUrl: (process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000').replace(/\/$/, ''),
+  appUrl: (process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000').trim().replace(/[\r\n]+/g, '').replace(/\/$/, ''),
 
   hubspotApiKey: process.env.HUBSPOT_API_KEY || '',
   hubspotPortalId: process.env.HUBSPOT_PORTAL_ID || '',

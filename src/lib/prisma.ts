@@ -5,6 +5,9 @@ const globalForPrisma = global as unknown as { prisma: PrismaClient };
 
 function getDatabaseUrl() {
   const envUrl = process.env.DATABASE_URL;
+  if (envUrl && (envUrl.startsWith('postgres://') || envUrl.startsWith('postgresql://'))) {
+    return envUrl;
+  }
   if (!envUrl || envUrl === 'file:./dev.db' || envUrl === 'file:./prisma/dev.db' || envUrl.startsWith('file:.')) {
     const dbPath = path.join(process.cwd(), 'prisma', 'dev.db');
     return `file:${dbPath}`;

@@ -183,7 +183,7 @@ export function Navbar({ session }: { session: NavSession | null }) {
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan shadow-[0_0_8px_#06b6d4]"></span>
               </span>
               <span className="rounded-full border border-cyan/40 bg-cyan/15 px-2 py-0.5 font-mono text-[9px] font-black uppercase tracking-widest text-cyan shadow-sm">
-                NEXUS
+                LIVE
               </span>
             </div>
           </div>

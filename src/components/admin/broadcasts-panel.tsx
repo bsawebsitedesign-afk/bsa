@@ -71,7 +71,8 @@ function getTypeBadge(type: string) {
 export function BroadcastsPanel() {
   const toast = useToast();
   const [notifications, setNotifications] = useState<AdminNotification[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true
+  );
   const [submitting, setSubmitting] = useState(false);
 
   // Form State

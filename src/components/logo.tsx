@@ -40,7 +40,7 @@ export function Logo({
       {showWord && (
         <span className="flex flex-col leading-none">
           <span className="font-display text-lg font-bold tracking-tight text-ink group-hover:text-cyan transition-colors">
-            BSA <span className="text-cyan text-xs font-mono font-normal tracking-wide">NEXUS</span>
+            BSA
           </span>
           {subtitle && (
             <span className="mt-1 font-mono text-[0.5625rem] uppercase tracking-[0.18em] text-ink-muted">

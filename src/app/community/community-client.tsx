@@ -191,7 +191,7 @@ export function CommunityClient({ initialUser }: { initialUser: { userId: string
           <div>
             <div className="flex items-center gap-3">
               <span className="rounded-full bg-cyan/20 border border-cyan/40 px-3 py-1 font-mono text-xs font-bold text-cyan">
-                BSA NEXUS HUB
+                BSA COMMUNITY HUB
               </span>
               <span className="flex items-center gap-1.5 font-mono text-xs font-semibold text-lime">
                 <span className="h-2 w-2 rounded-full bg-lime animate-pulse" /> Live Real-Time Feed

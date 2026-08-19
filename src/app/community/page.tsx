@@ -6,7 +6,7 @@ import { prisma } from '@/lib/prisma';
 import { CommunityClient } from './community-client';
 
 export const metadata: Metadata = {
-  title: 'Community Hub & Member Chat | BSA Nexus',
+  title: 'Community Hub & Member Chat | BSA',
   description: 'Connect and chat live with physical and cybersecurity executive leaders across the Business Security Alliance.',
 };
 

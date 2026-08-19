@@ -241,7 +241,7 @@ export function LoginClient({ redirectTo }: { redirectTo: string | null }) {
               </>
             ) : (
               <>
-                <span>Sign In to BSA Nexus</span>
+                <span>Sign In to BSA</span>
                 <ArrowRight weight="bold" className="h-4 w-4 transition-transform group-hover:translate-x-1" />
               </>
             )}

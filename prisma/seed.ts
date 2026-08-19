@@ -946,7 +946,7 @@ async function main() {
         createdById: adminUser.id,
       },
       {
-        title: 'Welcome to BSA Nexus Platform',
+        title: 'Welcome to BSA Platform',
         message: 'Welcome to the global platform for converged physical, electronic, and cybersecurity leadership. Discover regional chapters, live events, and career opportunities.',
         type: 'INFO',
         linkUrl: '/about',

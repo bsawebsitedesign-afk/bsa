@@ -95,7 +95,7 @@ export default async function LoginPage({
             <h1 className="mt-4 font-display text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-tight">
               Welcome Back to <br />
               <span className="bg-gradient-to-r from-white via-cyan-bright to-violet-bright bg-clip-text text-transparent">
-                BSA Nexus.
+                BSA.
               </span>
             </h1>
             <p className="mt-3 max-w-lg text-sm sm:text-base leading-relaxed text-white font-normal" style={{ color: '#FFFFFF' }}>

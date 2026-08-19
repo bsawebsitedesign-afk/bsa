@@ -421,9 +421,10 @@ export function HeroForge({
       // Below `lg` the medallion is a backdrop behind the copy at low alpha, so
       // it is sampled coarsely on purpose; there is nothing there to read.
       const wide = width >= 1024;
-      // Ultra-fine micro-pixel pitch: 1.25px on desktop, 2.2px on mobile
-      const pitchPx = wide ? 1.25 : 2.2;
-      const S = Math.max(64, Math.min(480, Math.round((layout().R / pitchPx) * densityScale)));
+      // High-definition responsive micro-pixel pitch: 1.75px on desktop, 2.5px on mobile
+      const pitchPx = wide ? 1.75 : 2.5;
+      const maxS = wide ? 310 : 220;
+      const S = Math.max(64, Math.min(maxS, Math.round((layout().R / pitchPx) * densityScale)));
       // One sample per raster pixel. The raster is already sized to the screen,
       // so a stride here would only undo the work above.
       const step = 1;
@@ -480,7 +481,7 @@ export function HeroForge({
       // beating against a regular lattice of sample points, which checkerboards
       // exactly the way two combs do. Low-passing the height field below the
       // pitch of those lines is what stops it.
-      const smooth = blurField(lumField, S, Math.max(1, Math.round(S / 120)));
+      const smooth = blurField(lumField, S, Math.max(1, Math.round(S / 90)));
       const smoothAt = (px: number, py: number) => {
         const x = px < 0 ? 0 : px > S - 1 ? S - 1 : px;
         const y = py < 0 ? 0 : py > S - 1 ? S - 1 : py;
@@ -513,7 +514,7 @@ export function HeroForge({
       // across one raster pixel, so the surface is lit identically at every
       // sampling density. Without this the normals sharpen as S rises and the
       // medallion is visibly more contrasty on a large monitor than a small one.
-      const GRAD = Math.max(1, Math.round(S / 200));
+      const GRAD = Math.max(1, Math.round(S / 160));
       const gradScale = S / (2 * GRAD);
 
       const xs: number[] = [];

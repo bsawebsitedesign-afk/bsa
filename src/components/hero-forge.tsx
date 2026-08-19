@@ -421,18 +421,9 @@ export function HeroForge({
       // Below `lg` the medallion is a backdrop behind the copy at low alpha, so
       // it is sampled coarsely on purpose; there is nothing there to read.
       const wide = width >= 1024;
-      // `pitchPx`, not `pitch`: the camera's pitch angle is also in scope here,
-      // and one of the two silently shadowing the other is a trap.
-      const pitchPx = wide ? 3 : 4.6;
-      // `densityScale` is the rung a device that could not hold the frame has
-      // stepped down to; it is 1 everywhere else.
-      //
-      // The ceiling matters as much as the pitch. Point count grows with the
-      // square of the raster, so an ultrawide display would ask for two and a
-      // half times the samples a 1440 laptop does, and `drawCloud` is the whole
-      // frame budget. Past 210 the grain is already finer than the eye picks
-      // out at arm's length, so the extra buys nothing worth the frames.
-      const S = Math.max(64, Math.min(210, Math.round((layout().R / pitchPx) * densityScale)));
+      // Ultra-fine micro-pixel pitch: 1.25px on desktop, 2.2px on mobile
+      const pitchPx = wide ? 1.25 : 2.2;
+      const S = Math.max(64, Math.min(480, Math.round((layout().R / pitchPx) * densityScale)));
       // One sample per raster pixel. The raster is already sized to the screen,
       // so a stride here would only undo the work above.
       const step = 1;
@@ -489,7 +480,7 @@ export function HeroForge({
       // beating against a regular lattice of sample points, which checkerboards
       // exactly the way two combs do. Low-passing the height field below the
       // pitch of those lines is what stops it.
-      const smooth = blurField(lumField, S, Math.max(1, Math.round(S / 70)));
+      const smooth = blurField(lumField, S, Math.max(1, Math.round(S / 120)));
       const smoothAt = (px: number, py: number) => {
         const x = px < 0 ? 0 : px > S - 1 ? S - 1 : px;
         const y = py < 0 ? 0 : py > S - 1 ? S - 1 : py;
@@ -522,7 +513,7 @@ export function HeroForge({
       // across one raster pixel, so the surface is lit identically at every
       // sampling density. Without this the normals sharpen as S rises and the
       // medallion is visibly more contrasty on a large monitor than a small one.
-      const GRAD = Math.max(1, Math.round(S / 150));
+      const GRAD = Math.max(1, Math.round(S / 200));
       const gradScale = S / (2 * GRAD);
 
       const xs: number[] = [];

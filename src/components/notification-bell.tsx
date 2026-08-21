@@ -30,8 +30,9 @@ function timeAgo(dateString: string): string {
 function getTypeBadge(type: string) {
   switch (type.toUpperCase()) {
     case 'ALERT':
+    case 'SECURITY':
       return {
-        label: 'CRITICAL ALERT',
+        label: 'SECURITY ALERT',
         bg: 'border-rose/50 bg-rose/15 text-rose',
         icon: <Warning className="h-3 w-3" />,
       };
@@ -214,62 +215,66 @@ export function NotificationBell() {
                     <p className="text-[11px] text-white/50">All systems are currently nominal.</p>
                   </div>
                 ) : (
-                  notifications.map((item) => {
-                    const isUnread = !readIds.includes(item.id);
-                    const badge = getTypeBadge(item.type);
+                  [...notifications]
+                    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+                    .map((item) => {
+                      const isUnread = !readIds.includes(item.id);
+                      const badge = getTypeBadge(item.type);
 
-                    return (
-                      <div
-                        key={item.id}
-                        onClick={() => markSingleAsRead(item.id)}
-                        className={`p-4 transition-colors ${
-                          isUnread ? 'bg-[#101728] hover:bg-[#151E33]' : 'bg-[#0B0F19] hover:bg-[#101626]'
-                        }`}
-                      >
-                        <div className="flex items-center justify-between gap-2 mb-1.5">
-                          <div className="flex items-center gap-1.5">
-                            <span
-                              className={`inline-flex items-center gap-1 rounded-md border px-2 py-0.5 font-mono text-[9px] font-black uppercase tracking-wider ${badge.bg}`}
-                            >
-                              {badge.icon}
-                              <span>{badge.label}</span>
-                            </span>
-                            {item.isPinned && (
-                              <span className="flex items-center gap-0.5 rounded-md border border-amber/40 bg-amber/10 px-1.5 py-0.5 font-mono text-[9px] font-bold text-amber">
-                                <PushPin className="h-2.5 w-2.5" />
-                                PINNED
+                      return (
+                        <div
+                          key={item.id}
+                          onClick={() => markSingleAsRead(item.id)}
+                          className={`p-4 transition-colors relative cursor-pointer ${
+                            isUnread
+                              ? 'bg-[#101728] hover:bg-[#151E33] border-l-2 border-l-cyan'
+                              : 'bg-[#0B0F19] hover:bg-[#101626] border-l-2 border-l-transparent'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between gap-2 mb-1.5">
+                            <div className="flex flex-wrap items-center gap-1.5">
+                              <span
+                                className={`inline-flex items-center gap-1 rounded-md border px-2 py-0.5 font-mono text-[9px] font-black uppercase tracking-wider ${badge.bg}`}
+                              >
+                                {badge.icon}
+                                <span>{badge.label}</span>
                               </span>
-                            )}
+                              {item.isPinned && (
+                                <span className="flex items-center gap-0.5 rounded-md border border-amber/40 bg-amber/10 px-1.5 py-0.5 font-mono text-[9px] font-bold text-amber">
+                                  <PushPin className="h-2.5 w-2.5" />
+                                  PINNED
+                                </span>
+                              )}
+                            </div>
+                            <span className="font-mono text-[10px] text-cyan/90 font-bold shrink-0">{timeAgo(item.createdAt)}</span>
                           </div>
-                          <span className="font-mono text-[10px] text-white/50">{timeAgo(item.createdAt)}</span>
+
+                          <h5 className="text-xs font-bold text-white leading-snug">
+                            {item.title}
+                          </h5>
+
+                          <p className="mt-1 text-xs text-slate-200 leading-relaxed font-normal">
+                            {item.message}
+                          </p>
+
+                          {item.linkUrl && (
+                            <div className="mt-2.5">
+                              <Link
+                                href={item.linkUrl}
+                                onClick={() => {
+                                  markSingleAsRead(item.id);
+                                  setOpen(false);
+                                }}
+                                className="inline-flex items-center gap-1 rounded-lg border border-cyan/50 bg-cyan/20 px-2.5 py-1 font-mono text-[10px] font-bold text-cyan transition-all hover:bg-cyan hover:text-black shadow-sm group"
+                              >
+                                <span>{item.linkText || 'View Details'}</span>
+                                <span className="transition-transform group-hover:translate-x-0.5">→</span>
+                              </Link>
+                            </div>
+                          )}
                         </div>
-
-                        <h5 className="text-xs font-bold text-white leading-snug">
-                          {item.title}
-                        </h5>
-
-                        <p className="mt-1 text-xs text-slate-200 leading-relaxed font-normal">
-                          {item.message}
-                        </p>
-
-                        {item.linkUrl && (
-                          <div className="mt-2.5">
-                            <Link
-                              href={item.linkUrl}
-                              onClick={() => {
-                                markSingleAsRead(item.id);
-                                setOpen(false);
-                              }}
-                              className="inline-flex items-center gap-1 rounded-lg border border-cyan/50 bg-cyan/20 px-2.5 py-1 font-mono text-[10px] font-bold text-cyan transition-all hover:bg-cyan hover:text-black shadow-sm group"
-                            >
-                              <span>{item.linkText || 'View Details'}</span>
-                              <span className="transition-transform group-hover:translate-x-0.5">→</span>
-                            </Link>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })
+                      );
+                    })
                 )}
               </div>
 

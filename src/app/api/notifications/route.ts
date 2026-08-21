@@ -7,8 +7,8 @@ export async function GET() {
   try {
     const notifications = await prisma.siteNotification.findMany({
       where: { isActive: true },
-      orderBy: [{ isPinned: 'desc' }, { createdAt: 'desc' }],
-      take: 20,
+      orderBy: { createdAt: 'desc' },
+      take: 30,
       select: {
         id: true,
         title: true,

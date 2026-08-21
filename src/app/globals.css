@@ -33,9 +33,23 @@
     text-rendering: optimizeLegibility;
   }
 
-  /* Safari glassmorphism backdrop-filter fallback support */
-  .panel-glass, [data-glass], .backdrop-blur-xl, .backdrop-blur-md, .backdrop-blur-lg, .backdrop-blur-2xl {
+  /* Safari Webkit glassmorphism backdrop-filter utilities */
+  .backdrop-blur-none { -webkit-backdrop-filter: none; backdrop-filter: none; }
+  .backdrop-blur-sm   { -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); }
+  .backdrop-blur      { -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
+  .backdrop-blur-md   { -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); }
+  .backdrop-blur-lg   { -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); }
+  .backdrop-blur-xl   { -webkit-backdrop-filter: blur(24px); backdrop-filter: blur(24px); }
+  .backdrop-blur-2xl  { -webkit-backdrop-filter: blur(40px); backdrop-filter: blur(40px); }
+  .backdrop-blur-3xl  { -webkit-backdrop-filter: blur(64px); backdrop-filter: blur(64px); }
+
+  .panel-glass, [data-glass] {
     -webkit-backdrop-filter: blur(var(--glass-blur, 20px));
+  }
+
+  /* Safari touch scrolling enhancement */
+  .overflow-y-auto, .overflow-x-auto, .overflow-auto {
+    -webkit-overflow-scrolling: touch;
   }
 
   :root {

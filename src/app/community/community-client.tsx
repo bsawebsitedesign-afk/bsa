@@ -512,7 +512,7 @@ export function CommunityClient({ initialUser }: { initialUser: { userId: string
       </div>
 
       {/* Main Workspace Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-[340px,1fr] gap-6 items-start h-[780px] max-h-[82vh]">
+      <div className="grid grid-cols-1 lg:grid-cols-[340px,1fr] gap-6 items-start h-[calc(100dvh-180px)] min-h-[520px] max-h-[820px] lg:h-[760px]">
         {/* Left Sidebar Nav Panel */}
         <div className={cn('flex flex-col h-full overflow-hidden rounded-2xl border border-line bg-surface/90 shadow-panel-lg backdrop-blur-md', mobilePanel === 'chat' && 'hidden lg:flex')}>
           <div className="grid grid-cols-2 border-b border-line bg-surface-inset/80 p-1.5 gap-1">

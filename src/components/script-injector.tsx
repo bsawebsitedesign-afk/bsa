@@ -15,11 +15,10 @@ function injectHeaderNodes(html: string) {
 
   if (!html || !html.trim()) return;
 
-  const parser = new DOMParser();
-  const doc = parser.parseFromString(html, 'text/html');
-  const nodes = Array.from(doc.head.childNodes).concat(Array.from(doc.body.childNodes));
+  const range = document.createRange();
+  const fragment = range.createContextualFragment(html);
 
-  nodes.forEach((node) => {
+  Array.from(fragment.childNodes).forEach((node) => {
     if (node.nodeType === Node.COMMENT_NODE) {
       const comment = document.createComment(node.textContent || '');
       document.head.appendChild(comment);
@@ -51,10 +50,10 @@ function parseAndInjectBody(html: string, parent: HTMLElement, containerId: stri
   container.setAttribute('data-bsa-script-container', 'true');
   container.style.display = 'contents';
 
-  const parser = new DOMParser();
-  const doc = parser.parseFromString(html, 'text/html');
+  const range = document.createRange();
+  const fragment = range.createContextualFragment(html);
 
-  Array.from(doc.head.childNodes).concat(Array.from(doc.body.childNodes)).forEach((node) => {
+  Array.from(fragment.childNodes).forEach((node) => {
     if (node.nodeType === Node.COMMENT_NODE) {
       container.appendChild(document.createComment(node.textContent || ''));
     } else if (node.nodeName.toLowerCase() === 'script') {

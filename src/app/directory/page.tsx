@@ -12,6 +12,8 @@ import { parseList } from '@/lib/utils';
 import { MEMBER_TYPES } from '@/lib/validation';
 import { DirectoryClient, type DirectoryMember } from './directory-client';
 
+import { getSession } from '@/lib/auth';
+
 export const revalidate = 30;
 
 export const metadata: Metadata = {
@@ -36,11 +38,16 @@ export default async function DirectoryPage({
 }) {
   let profiles: any[] = [];
   let chapterCount = 0;
+  const session = await getSession();
 
   try {
     const fetched = await Promise.all([
       prisma.memberProfile.findMany({
-        where: { user: { status: 'ACTIVE', role: { not: 'ADMIN' } }, privacy: { searchableInDirectory: true, isPublic: true } },
+        where: {
+          user: { status: 'ACTIVE', role: { not: 'ADMIN' } },
+          privacy: { searchableInDirectory: true, isPublic: true },
+          ...(session?.userId ? { NOT: { userId: session.userId } } : {}),
+        },
         orderBy: { fullName: 'asc' },
         // Nothing here is private: no email, no phone, no privacy-gated links.
         select: {

@@ -21,6 +21,23 @@
    ========================================================================== */
 
 @layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Safari glassmorphism backdrop-filter fallback support */
+  .panel-glass, [data-glass], .backdrop-blur-xl, .backdrop-blur-md, .backdrop-blur-lg, .backdrop-blur-2xl {
+    -webkit-backdrop-filter: blur(var(--glass-blur, 20px));
+  }
+
   :root {
     /* --- dark obsidian plate + steel blue + silver medallion default --- */
     --void: 10 13 18;

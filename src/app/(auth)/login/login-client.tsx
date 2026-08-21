@@ -34,16 +34,23 @@ export function LoginClient({ redirectTo }: { redirectTo: string | null }) {
     setStatus('pending');
     setFailure(null);
 
+    const cleanEmail = nextEmail.trim().toLowerCase();
+
     try {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: nextEmail, password: nextPassword }),
+        body: JSON.stringify({ email: cleanEmail, password: nextPassword }),
       });
 
-      const data = (await res.json()) as { ok?: boolean; error?: string; role?: string };
+      let data: { ok?: boolean; error?: string; role?: string } = {};
+      try {
+        data = (await res.json()) as { ok?: boolean; error?: string; role?: string };
+      } catch {
+        data = {};
+      }
 
-      if (!data.ok) {
+      if (!res.ok || !data.ok) {
         setAttempt((n) => n + 1);
         setFailure({
           message: data.error || 'Invalid credentials. Please verify your email and password.',

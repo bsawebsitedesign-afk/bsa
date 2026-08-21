@@ -8,9 +8,10 @@ export const POST = route(async (req) => {
   guard(req, 'login', LIMITS.auth);
 
   const { email, password } = await readBody(req, loginSchema);
+  const cleanEmail = email.trim().toLowerCase();
 
   const user = await prisma.user.findUnique({
-    where: { email },
+    where: { email: cleanEmail },
     select: { id: true, email: true, role: true, status: true, passwordHash: true },
   });
 

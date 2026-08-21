@@ -94,12 +94,14 @@ export function CommunityClient({ initialUser }: { initialUser: { userId: string
     }
   }, [initialDm, members]);
 
-  // Instant sub-second polling (every 1 second)
+  const fetchCountRef = useRef<number>(0);
+
+  // Smooth polling (every 2 seconds) with race condition protection
   useEffect(() => {
     fetchMessages();
-    const interval = setInterval(fetchMessages, 1000);
+    const interval = setInterval(fetchMessages, 2000);
     return () => clearInterval(interval);
-  }, [activeChannel, activeRecipient, activeTab]);
+  }, [activeChannel, activeRecipient?.userId, activeTab]);
 
   // Smart Auto-Scroll: scroll down if user is near bottom, else show unread pill
   useEffect(() => {
@@ -143,6 +145,7 @@ export function CommunityClient({ initialUser }: { initialUser: { userId: string
   }
 
   async function fetchMessages() {
+    const currentId = ++fetchCountRef.current;
     try {
       if (activeTab === 'dms' && !activeRecipient) {
         setMessages([]);
@@ -158,9 +161,22 @@ export function CommunityClient({ initialUser }: { initialUser: { userId: string
 
       const res = await fetch(url);
       const data = await res.json();
+
+      // Discard responses from older out-of-order requests
+      if (currentId !== fetchCountRef.current) return;
+
       const msgList = data.messages || data.data?.messages;
       if (data.ok && Array.isArray(msgList)) {
-        setMessages(msgList);
+        setMessages((prev) => {
+          // If message IDs and contents are identical, return existing array reference (zero re-renders/flashing)
+          if (
+            prev.length === msgList.length &&
+            prev.every((m, idx) => m.id === msgList[idx]?.id && m.content === msgList[idx]?.content)
+          ) {
+            return prev;
+          }
+          return msgList;
+        });
       }
     } catch {
       // quiet retry

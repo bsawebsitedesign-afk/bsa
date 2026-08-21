@@ -14,7 +14,7 @@ import { DirectoryClient, type DirectoryMember } from './directory-client';
 
 import { getSession } from '@/lib/auth';
 
-export const revalidate = 30;
+export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
   title: 'Member directory',

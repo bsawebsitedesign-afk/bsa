@@ -56,7 +56,8 @@ const CHANNELS = [
 export function CommunityClient({ initialUser }: { initialUser: { userId: string; fullName: string; role: string } }) {
   const searchParams = useSearchParams();
   const toast = useToast();
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const chatFeedRef = useRef<HTMLDivElement>(null);
+  const prevMsgCountRef = useRef<number>(0);
 
   const initialDm = searchParams.get('dm');
 
@@ -96,10 +97,19 @@ export function CommunityClient({ initialUser }: { initialUser: { userId: string
     return () => clearInterval(interval);
   }, [activeChannel, activeRecipient, activeTab]);
 
-  // Scroll to bottom on new messages
+  // Scroll inner chat feed box (NEVER the main page window) on new messages
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+    if (!chatFeedRef.current) return;
+    const isNew = messages.length > prevMsgCountRef.current;
+    prevMsgCountRef.current = messages.length;
+
+    if (isNew) {
+      chatFeedRef.current.scrollTo({
+        top: chatFeedRef.current.scrollHeight,
+        behavior: 'smooth',
+      });
+    }
+  }, [messages.length, activeChannel, activeRecipient, activeTab]);
 
   async function fetchMembers() {
     try {
@@ -355,7 +365,7 @@ export function CommunityClient({ initialUser }: { initialUser: { userId: string
           </div>
 
           {/* Messages Feed Area */}
-          <div className="flex-1 overflow-y-auto p-6 space-y-5 bg-base/40">
+          <div ref={chatFeedRef} className="flex-1 overflow-y-auto p-6 space-y-5 bg-base/40">
             {messages.length === 0 ? (
               <div className="h-full flex flex-col items-center justify-center text-center p-8 text-ink-muted space-y-3">
                 <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-cyan/15 text-3xl border border-cyan/30">
@@ -409,7 +419,6 @@ export function CommunityClient({ initialUser }: { initialUser: { userId: string
                 );
               })
             )}
-            <div ref={messagesEndRef} />
           </div>
 
           {/* Attachment Preview if any */}

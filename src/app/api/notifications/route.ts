@@ -1,12 +1,22 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { getSession } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
+    const session = await getSession();
+    const currentUserId = session?.userId ?? null;
+
     const notifications = await prisma.siteNotification.findMany({
-      where: { isActive: true },
+      where: {
+        isActive: true,
+        OR: [
+          { targetUserId: null },
+          ...(currentUserId ? [{ targetUserId: currentUserId }] : []),
+        ],
+      },
       orderBy: { createdAt: 'desc' },
       take: 30,
       select: {

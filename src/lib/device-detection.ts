@@ -57,7 +57,8 @@ export async function detectAndNotifyNewDevice(userId: string, req: Request): Pr
             title: '🔐 Security Alert: New Device Sign-In',
             message: `Your BSA account was just accessed from a new device: ${deviceName}. If this was not you, please change your password immediately.`,
             type: 'SECURITY',
-            targetRole: 'ALL',
+            targetRole: 'USER',
+            targetUserId: userId,
             createdById: userId,
           },
         });

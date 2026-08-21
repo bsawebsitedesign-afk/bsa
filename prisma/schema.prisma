@@ -450,8 +450,9 @@ model SiteNotification {
   type        String   @default("INFO")
   linkUrl     String?
   linkText    String?
-  targetRole  String   @default("ALL")
-  isPinned    Boolean  @default(false)
+  targetRole   String   @default("ALL")
+  targetUserId String?
+  isPinned     Boolean  @default(false)
   isActive    Boolean  @default(true)
   createdById String?
   createdAt   DateTime @default(now())

@@ -116,9 +116,17 @@ export const POST = route(async (req) => {
 
   let validRecipientId: string | null = null;
   if (rawRecipientId) {
-    const recipientUser = await prisma.user.findUnique({ where: { id: rawRecipientId }, select: { id: true } });
+    let recipientUser = await prisma.user.findUnique({ where: { id: rawRecipientId }, select: { id: true } });
+    if (!recipientUser) {
+      recipientUser = await prisma.user.findFirst({
+        where: { OR: [{ profile: { handle: rawRecipientId } }, { profile: { id: rawRecipientId } }] },
+        select: { id: true },
+      });
+    }
     if (recipientUser) {
       validRecipientId = recipientUser.id;
+    } else {
+      throw new ApiError('Recipient user not found.', 404);
     }
   }
 

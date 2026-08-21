@@ -168,14 +168,10 @@ export function CommunityClient({ initialUser }: { initialUser: { userId: string
       const msgList = data.messages || data.data?.messages;
       if (data.ok && Array.isArray(msgList)) {
         setMessages((prev) => {
-          // If message IDs and contents are identical, return existing array reference (zero re-renders/flashing)
-          if (
+          const isIdentical =
             prev.length === msgList.length &&
-            prev.every((m, idx) => m.id === msgList[idx]?.id && m.content === msgList[idx]?.content)
-          ) {
-            return prev;
-          }
-          return msgList;
+            prev.every((m, idx) => m.id === msgList[idx]?.id);
+          return isIdentical ? prev : msgList;
         });
       }
     } catch {
@@ -217,9 +213,9 @@ export function CommunityClient({ initialUser }: { initialUser: { userId: string
       const newMsg = data.message || data.data?.message;
 
       if (data.ok && newMsg) {
-        setMessages((prev) => [...prev, newMsg]);
         setInputText('');
         setAttachedImage(null);
+        await fetchMessages();
         setTimeout(() => {
           if (chatFeedRef.current) {
             chatFeedRef.current.scrollTop = chatFeedRef.current.scrollHeight;

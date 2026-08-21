@@ -85,7 +85,7 @@ export function NotificationBell() {
   // Fetch notifications
   const fetchNotifications = async () => {
     try {
-      const res = await fetch('/api/notifications');
+      const res = await fetch('/api/notifications', { cache: 'no-store' });
       if (res.ok) {
         const data = await res.json();
         if (data?.ok && Array.isArray(data.data)) {

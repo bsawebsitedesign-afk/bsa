@@ -95,12 +95,15 @@ async function loadNavSession(): Promise<NavSession | null> {
   };
 }
 
+import { ScriptInjector } from '@/components/script-injector';
+
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const navSession = await loadNavSession();
 
   return (
     <html lang="en" className={`${display.variable} ${sans.variable} ${mono.variable} ${accent.variable}`}>
       <body className="flex min-h-[100dvh] flex-col bg-base font-sans text-ink antialiased">
+        <ScriptInjector />
         <a
           href="#main"
           className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-md focus:bg-cyan focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-on-accent"

@@ -15,6 +15,7 @@ import { Avatar, EmptyState, ProgressMeter, Stat } from '@/components/ui/misc';
 import { useToast } from '@/components/ui/toast';
 import { MediaDirectory } from '@/components/media/media-directory';
 import { BroadcastsPanel } from '@/components/admin/broadcasts-panel';
+import { ScriptsPanel } from '@/components/admin/scripts-panel';
 import { cn, formatDate } from '@/lib/utils';
 import { formatMoney } from '@/lib/payment';
 
@@ -185,6 +186,7 @@ export interface AdminLead {
 type TabKey =
   | 'overview'
   | 'broadcasts'
+  | 'scripts'
   | 'requests'
   | 'members'
   | 'events'
@@ -199,6 +201,7 @@ type TabKey =
 const TABS: Array<{ key: TabKey; label: string; emoji: string }> = [
   { key: 'overview', label: 'Overview', emoji: '📊' },
   { key: 'broadcasts', label: 'Broadcast Alerts', emoji: '🔔' },
+  { key: 'scripts', label: 'Header & Footer Code', emoji: '🏷️' },
   { key: 'requests', label: 'Access Requests', emoji: '🔐' },
   { key: 'members', label: 'Members', emoji: '👤' },
   { key: 'events', label: 'Events', emoji: '🎟️' },
@@ -3900,6 +3903,7 @@ export function AdminClient({
   const tabCount: Record<TabKey, number | null> = {
     overview: null,
     broadcasts: null,
+    scripts: null,
     requests: pendingRequestsCount,
     members: counts.members,
     events: counts.events,
@@ -4071,6 +4075,7 @@ export function AdminClient({
                 />
               )}
               {tab === 'broadcasts' && <BroadcastsPanel />}
+              {tab === 'scripts' && <ScriptsPanel />}
               {tab === 'requests' && <AccessRequestsPanel members={members} adminUserId={adminUserId} />}
               {tab === 'members' && <MembersPanel members={members} adminUserId={adminUserId} />}
               {tab === 'events' && <EventsPanel events={events} />}

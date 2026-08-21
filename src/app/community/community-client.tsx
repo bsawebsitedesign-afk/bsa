@@ -90,26 +90,19 @@ export function CommunityClient({ initialUser }: { initialUser: { userId: string
     }
   }, [initialDm, members]);
 
-  // Poll messages every 3 seconds
+  // Poll messages every 3 seconds without disturbing user scroll position
   useEffect(() => {
     fetchMessages();
     const interval = setInterval(fetchMessages, 3000);
     return () => clearInterval(interval);
   }, [activeChannel, activeRecipient, activeTab]);
 
-  // Scroll inner chat feed box (NEVER the main page window) on new messages
+  // Scroll inner chat feed box ONLY when switching channel or DM recipient
   useEffect(() => {
-    if (!chatFeedRef.current) return;
-    const isNew = messages.length > prevMsgCountRef.current;
-    prevMsgCountRef.current = messages.length;
-
-    if (isNew) {
-      chatFeedRef.current.scrollTo({
-        top: chatFeedRef.current.scrollHeight,
-        behavior: 'smooth',
-      });
+    if (chatFeedRef.current) {
+      chatFeedRef.current.scrollTop = chatFeedRef.current.scrollHeight;
     }
-  }, [messages.length, activeChannel, activeRecipient, activeTab]);
+  }, [activeChannel, activeRecipient?.userId, activeTab]);
 
   async function fetchMembers() {
     try {
@@ -176,6 +169,11 @@ export function CommunityClient({ initialUser }: { initialUser: { userId: string
         setMessages((prev) => [...prev, newMsg]);
         setInputText('');
         setAttachedImage(null);
+        setTimeout(() => {
+          if (chatFeedRef.current) {
+            chatFeedRef.current.scrollTop = chatFeedRef.current.scrollHeight;
+          }
+        }, 50);
       } else {
         toast.error(data.error || 'Failed to send message');
       }

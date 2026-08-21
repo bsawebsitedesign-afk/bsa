@@ -1,35 +1,35 @@
 import { PrismaClient } from '@prisma/client';
+import { CHANNELS, DEFAULT_CHANNEL } from '../src/lib/chat';
 
 const prisma = new PrismaClient();
 
+/**
+ * Repairs chat rows written before the API enforced its invariants:
+ * a message is either a channel post or a DM, never both, and a channel
+ * post always names a channel that still exists.
+ */
 async function main() {
   console.log('🧹 Cleaning up database chat messages for strict separation…');
 
-  // Fix any chat messages that have both channel AND recipientId set
   const invalidDms = await prisma.chatMessage.updateMany({
-    where: {
-      recipientId: { not: null },
-      channel: { not: null },
-    },
-    data: {
-      channel: null,
-    },
+    where: { recipientId: { not: null }, channel: { not: null } },
+    data: { channel: null },
   });
-
   console.log(`✅ Cleaned ${invalidDms.count} DM messages with leftover channel fields.`);
 
-  // Fix any channel messages that have recipientId set
-  const invalidChannels = await prisma.chatMessage.updateMany({
-    where: {
-      channel: { not: null },
-      recipientId: { not: null },
-    },
-    data: {
-      recipientId: null,
-    },
+  // Messages parked in a channel the UI no longer lists are invisible forever.
+  const orphaned = await prisma.chatMessage.updateMany({
+    where: { recipientId: null, channel: { not: null, notIn: CHANNELS.map((c) => c.id) } },
+    data: { channel: DEFAULT_CHANNEL },
   });
+  console.log(`✅ Moved ${orphaned.count} messages from retired channels into #${DEFAULT_CHANNEL}.`);
 
-  console.log(`✅ Cleaned ${invalidChannels.count} Channel messages with leftover recipientId fields.`);
+  // Receipts for conversations that no longer exist just waste rows.
+  const liveKeys = CHANNELS.map((c) => `ch:${c.id}`);
+  const staleReads = await prisma.chatRead.deleteMany({
+    where: { conversationId: { startsWith: 'ch:', notIn: liveKeys } },
+  });
+  console.log(`✅ Removed ${staleReads.count} read receipts for retired channels.`);
 
   console.log('🎉 Chat message database cleanup complete!');
 }
@@ -37,6 +37,7 @@ async function main() {
 main()
   .catch((e) => {
     console.error('❌ Error during chat message cleanup:', e);
+    process.exitCode = 1;
   })
   .finally(async () => {
     await prisma.$disconnect();

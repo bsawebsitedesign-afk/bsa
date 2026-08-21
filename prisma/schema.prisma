@@ -21,6 +21,7 @@ model User {
   memberships      ChapterMembership[]
   receivedMessages ChatMessage[]        @relation("ReceivedMessages")
   sentMessages     ChatMessage[]        @relation("SentMessages")
+  chatReads        ChatRead[]
   registrations    EventRegistration[]
   formSubmissions  FormSubmission[]
   profile          MemberProfile?
@@ -424,6 +425,21 @@ model ChatMessage {
   @@index([senderId])
   @@index([recipientId])
   @@index([createdAt])
+}
+
+// One read receipt per member per conversation - the high-water mark of what
+// they have seen. conversationId is a single composite key ("ch:general" or
+// "dm:<peerUserId>") rather than two nullable columns, because Postgres treats
+// NULLs as distinct in a unique index and would happily store duplicates.
+model ChatRead {
+  id             String   @id @default(uuid())
+  userId         String
+  conversationId String
+  lastReadAt     DateTime @default(now())
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, conversationId])
+  @@index([conversationId])
 }
 
 model SiteNotification {

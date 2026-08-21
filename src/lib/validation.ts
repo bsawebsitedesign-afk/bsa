@@ -263,3 +263,29 @@ export const adminLeadHandledSchema = z.object({
   id: z.string().uuid(),
   isHandled: z.boolean(),
 });
+
+/* -------------------------------------------------------------------------- */
+/* Community chat                                                              */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Attachments are stored inline as base64 data URLs, so the length cap is what
+ * stops one message from writing a multi-megabyte row on every send.
+ */
+const chatImageUrl = z
+  .union([imageUrlSchema.max(1_500_000, 'That image is too large - upload a smaller one.'), z.literal('')])
+  .optional()
+  .nullable()
+  .transform((v) => (v ? v : null));
+
+export const chatSendSchema = z
+  .object({
+    channel: z.string().trim().max(40).optional().nullable(),
+    recipientId: z.string().trim().max(64).optional().nullable(),
+    content: z.string().trim().max(4000, 'Messages max out at 4,000 characters.').default(''),
+    imageUrl: chatImageUrl,
+  })
+  .refine((v) => v.content.length > 0 || Boolean(v.imageUrl), {
+    message: 'Type a message or attach an image first.',
+    path: ['content'],
+  });

@@ -32,6 +32,7 @@ async function main() {
   console.log('⬡ Clearing existing database data…');
 
   await prisma.siteNotification.deleteMany();
+  await prisma.chatRead.deleteMany();
   await prisma.chatMessage.deleteMany();
   await prisma.mediaAsset.deleteMany();
   await prisma.resourceProgress.deleteMany();

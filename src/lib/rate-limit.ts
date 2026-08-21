@@ -67,4 +67,7 @@ export const LIMITS = {
   payment: { limit: 10, windowMs: 60_000 },
   upload: { limit: 15, windowMs: 60_000 },
   adminApi: { limit: 120, windowMs: 60_000 },
+  // Chat polls once every few seconds per open tab, so reads need far more headroom than writes.
+  chatRead: { limit: 240, windowMs: 60_000 },
+  chatSend: { limit: 30, windowMs: 60_000 },
 } as const;

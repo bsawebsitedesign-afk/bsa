@@ -593,7 +593,7 @@ export function Navbar({ session }: { session: NavSession | null }) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="glass-panel fixed inset-0 top-[68px] z-40 overflow-y-auto rounded-none border-0 lg:hidden"
+            className="fixed inset-0 top-[68px] z-40 overflow-y-auto bg-base/95 backdrop-blur-2xl border-t border-line/60 lg:hidden"
           >
             <div className="pointer-events-none absolute inset-0 mesh-dots opacity-30" aria-hidden />
             <nav className="relative flex flex-col p-5">

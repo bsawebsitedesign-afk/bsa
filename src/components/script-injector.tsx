@@ -9,8 +9,38 @@ interface ScriptsData {
   pageBodyCodes: Record<string, string>;
 }
 
-function parseAndInject(html: string, parent: HTMLElement, containerId: string) {
-  // Remove existing container if re-injecting
+function injectHeaderNodes(html: string) {
+  // Clean up previous header nodes
+  document.querySelectorAll('[data-bsa-header-node="true"]').forEach((el) => el.remove());
+
+  if (!html || !html.trim()) return;
+
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(html, 'text/html');
+  const nodes = Array.from(doc.head.childNodes).concat(Array.from(doc.body.childNodes));
+
+  nodes.forEach((node) => {
+    if (node.nodeType === Node.COMMENT_NODE) {
+      const comment = document.createComment(node.textContent || '');
+      document.head.appendChild(comment);
+    } else if (node.nodeName.toLowerCase() === 'script') {
+      const scriptEl = document.createElement('script');
+      scriptEl.setAttribute('data-bsa-header-node', 'true');
+      const origScript = node as HTMLScriptElement;
+      Array.from(origScript.attributes).forEach((attr) => {
+        scriptEl.setAttribute(attr.name, attr.value);
+      });
+      scriptEl.textContent = origScript.textContent;
+      document.head.appendChild(scriptEl);
+    } else if (node.nodeType === Node.ELEMENT_NODE) {
+      const cloned = node.cloneNode(true) as HTMLElement;
+      cloned.setAttribute('data-bsa-header-node', 'true');
+      document.head.appendChild(cloned);
+    }
+  });
+}
+
+function parseAndInjectBody(html: string, parent: HTMLElement, containerId: string) {
   const existing = document.getElementById(containerId);
   if (existing) existing.remove();
 
@@ -21,13 +51,13 @@ function parseAndInject(html: string, parent: HTMLElement, containerId: string) 
   container.setAttribute('data-bsa-script-container', 'true');
   container.style.display = 'contents';
 
-  // Parse HTML
   const parser = new DOMParser();
   const doc = parser.parseFromString(html, 'text/html');
 
-  // Copy non-script nodes
   Array.from(doc.head.childNodes).concat(Array.from(doc.body.childNodes)).forEach((node) => {
-    if (node.nodeName.toLowerCase() === 'script') {
+    if (node.nodeType === Node.COMMENT_NODE) {
+      container.appendChild(document.createComment(node.textContent || ''));
+    } else if (node.nodeName.toLowerCase() === 'script') {
       const scriptEl = document.createElement('script');
       const origScript = node as HTMLScriptElement;
       Array.from(origScript.attributes).forEach((attr) => {
@@ -35,7 +65,7 @@ function parseAndInject(html: string, parent: HTMLElement, containerId: string) 
       });
       scriptEl.textContent = origScript.textContent;
       container.appendChild(scriptEl);
-    } else {
+    } else if (node.nodeType === Node.ELEMENT_NODE) {
       container.appendChild(node.cloneNode(true));
     }
   });
@@ -89,13 +119,10 @@ export function ScriptInjector() {
 function injectAll(data: ScriptsData, pathname: string) {
   if (typeof window === 'undefined' || typeof document === 'undefined') return;
 
-  // 1. Inject Global Header Code
-  if (data.headerCode) {
-    parseAndInject(data.headerCode, document.head, 'bsa-header-scripts');
-  }
+  // 1. Inject Global Header Code directly into <head>
+  injectHeaderNodes(data.headerCode);
 
   // 2. Inject Page-Specific Body Code
-  // Check exact path match (e.g. "/events"), fallback to "/" or "global"
   const bodyCode =
     data.pageBodyCodes[pathname] ||
     data.pageBodyCodes['global'] ||
@@ -103,7 +130,7 @@ function injectAll(data: ScriptsData, pathname: string) {
     '';
 
   if (bodyCode) {
-    parseAndInject(bodyCode, document.body, 'bsa-body-scripts');
+    parseAndInjectBody(bodyCode, document.body, 'bsa-body-scripts');
   } else {
     const existingBody = document.getElementById('bsa-body-scripts');
     if (existingBody) existingBody.remove();
@@ -111,6 +138,6 @@ function injectAll(data: ScriptsData, pathname: string) {
 
   // 3. Inject Global Footer Code
   if (data.footerCode) {
-    parseAndInject(data.footerCode, document.body, 'bsa-footer-scripts');
+    parseAndInjectBody(data.footerCode, document.body, 'bsa-footer-scripts');
   }
 }

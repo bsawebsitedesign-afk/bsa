@@ -80,6 +80,17 @@ export function Navbar({ session }: { session: NavSession | null }) {
     setUserMenuOpen(false);
   }, [pathname]);
 
+  // Prevent iOS Safari from displaying stale BF-cached pages on navigation
+  useEffect(() => {
+    function onPageShow(event: PageTransitionEvent) {
+      if (event.persisted) {
+        window.location.reload();
+      }
+    }
+    window.addEventListener('pageshow', onPageShow);
+    return () => window.removeEventListener('pageshow', onPageShow);
+  }, []);
+
   // Lock body scroll on mobile drawer
   useEffect(() => {
     if (!mobileOpen) return;

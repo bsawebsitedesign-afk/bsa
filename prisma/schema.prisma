@@ -57,6 +57,7 @@ model MemberProfile {
   openToOpportunities Boolean        @default(false)
   openToMentoring     Boolean        @default(false)
   openToSpeaking      Boolean        @default(false)
+  knownDevices        String         @default("[]")
   lastActiveAt        DateTime       @default(now())
   createdAt           DateTime       @default(now())
   updatedAt           DateTime       @updatedAt

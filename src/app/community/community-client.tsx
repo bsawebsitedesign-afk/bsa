@@ -119,8 +119,10 @@ export function CommunityClient({ initialUser }: { initialUser: { userId: string
     }
   }, [messages.length]);
 
-  // Scroll inner chat feed box on switching channel or DM recipient
+  // Clear feed and scroll on switching channel or DM recipient
   useEffect(() => {
+    setMessages([]);
+    prevMsgCountRef.current = 0;
     if (chatFeedRef.current) {
       chatFeedRef.current.scrollTop = chatFeedRef.current.scrollHeight;
     }
@@ -142,6 +144,11 @@ export function CommunityClient({ initialUser }: { initialUser: { userId: string
 
   async function fetchMessages() {
     try {
+      if (activeTab === 'dms' && !activeRecipient) {
+        setMessages([]);
+        return;
+      }
+
       let url = '/api/chat/messages?';
       if (activeTab === 'dms' && activeRecipient) {
         url += `recipientId=${encodeURIComponent(activeRecipient.userId)}`;
@@ -162,6 +169,11 @@ export function CommunityClient({ initialUser }: { initialUser: { userId: string
 
   async function handleSendMessage(e?: React.FormEvent) {
     if (e) e.preventDefault();
+
+    if (activeTab === 'dms' && !activeRecipient) {
+      toast.error('Please select an executive member to send a direct message');
+      return;
+    }
 
     const content = inputText.trim();
     if (!content && !attachedImage) return;

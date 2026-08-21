@@ -36,6 +36,7 @@ export const GET = route(async (req) => {
     const activeChannel = channel?.trim() || 'general';
     whereClause = {
       channel: activeChannel,
+      recipientId: null,
     };
   }
 

@@ -145,12 +145,23 @@ export function Navbar({ session }: { session: NavSession | null }) {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  const [signingOut, setSigningOut] = useState(false);
+
   const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
 
   async function signOut() {
-    await fetch('/api/auth/logout', { method: 'POST' });
-    router.push('/');
-    router.refresh();
+    if (signingOut) return;
+    setSigningOut(true);
+    setUserMenuOpen(false);
+    setMobileOpen(false);
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' });
+      await new Promise((resolve) => setTimeout(resolve, 900));
+    } catch {
+      // quiet fallback
+    } finally {
+      window.location.href = '/login?signedOut=1';
+    }
   }
 
   function handleSearch(e: React.FormEvent) {
@@ -673,6 +684,44 @@ export function Navbar({ session }: { session: NavSession | null }) {
                 )}
               </div>
             </nav>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Executive Sign-Out Loading Overlay */}
+      <AnimatePresence>
+        {signingOut && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-[#0B0F19]/95 backdrop-blur-2xl p-6 text-center"
+          >
+            <div className="relative mb-6 flex h-20 w-20 items-center justify-center rounded-2xl border border-cyan/40 bg-surface shadow-glow-cyan">
+              <div className="absolute inset-0 rounded-2xl border border-cyan animate-ping opacity-25" />
+              <SignOut weight="bold" className="h-10 w-10 text-cyan animate-pulse" />
+            </div>
+
+            <div className="flex items-center gap-2 mb-2 font-mono text-xs font-bold uppercase tracking-widest text-cyan">
+              <span className="h-2 w-2 rounded-full bg-cyan animate-pulse" />
+              SESSION TERMINATION IN PROGRESS
+            </div>
+
+            <h3 className="font-display text-2xl font-extrabold text-white sm:text-3xl">
+              Signing Out…
+            </h3>
+
+            <p className="mt-2 max-w-sm text-sm text-ink-muted leading-relaxed">
+              Securing your executive portal session and clearing session credentials safely.
+            </p>
+
+            <div className="mt-6 flex items-center gap-2 font-mono text-xs text-cyan/90 bg-cyan/10 border border-cyan/30 px-4 py-2 rounded-full shadow-sm">
+              <svg className="h-4 w-4 animate-spin text-cyan" viewBox="0 0 24 24" fill="none">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+              </svg>
+              Terminating session tokens…
+            </div>
           </motion.div>
         )}
       </AnimatePresence>

@@ -59,6 +59,9 @@ export function CommunityClient({ initialUser }: { initialUser: { userId: string
   const chatFeedRef = useRef<HTMLDivElement>(null);
   const prevMsgCountRef = useRef<number>(0);
 
+  const [mobilePanel, setMobilePanel] = useState<'list' | 'chat'>('chat');
+  const [hasUnreadBelow, setHasUnreadBelow] = useState(false);
+
   const initialDm = searchParams.get('dm');
 
   const [activeTab, setActiveTab] = useState<'channels' | 'dms'>(initialDm ? 'dms' : 'channels');
@@ -86,22 +89,42 @@ export function CommunityClient({ initialUser }: { initialUser: { userId: string
       if (match) {
         setActiveRecipient(match);
         setActiveTab('dms');
+        setMobilePanel('chat');
       }
     }
   }, [initialDm, members]);
 
-  // Poll messages every 3 seconds without disturbing user scroll position
+  // Instant sub-second polling (every 1 second)
   useEffect(() => {
     fetchMessages();
-    const interval = setInterval(fetchMessages, 3000);
+    const interval = setInterval(fetchMessages, 1000);
     return () => clearInterval(interval);
   }, [activeChannel, activeRecipient, activeTab]);
 
-  // Scroll inner chat feed box ONLY when switching channel or DM recipient
+  // Smart Auto-Scroll: scroll down if user is near bottom, else show unread pill
+  useEffect(() => {
+    if (!chatFeedRef.current) return;
+    const feed = chatFeedRef.current;
+    const isNew = messages.length > prevMsgCountRef.current;
+    prevMsgCountRef.current = messages.length;
+
+    if (isNew) {
+      const isNearBottom = feed.scrollHeight - feed.scrollTop - feed.clientHeight < 260;
+      if (isNearBottom) {
+        feed.scrollTo({ top: feed.scrollHeight, behavior: 'smooth' });
+        setHasUnreadBelow(false);
+      } else {
+        setHasUnreadBelow(true);
+      }
+    }
+  }, [messages.length]);
+
+  // Scroll inner chat feed box on switching channel or DM recipient
   useEffect(() => {
     if (chatFeedRef.current) {
       chatFeedRef.current.scrollTop = chatFeedRef.current.scrollHeight;
     }
+    setHasUnreadBelow(false);
   }, [activeChannel, activeRecipient?.userId, activeTab]);
 
   async function fetchMembers() {
@@ -225,7 +248,7 @@ export function CommunityClient({ initialUser }: { initialUser: { userId: string
       {/* Main Workspace Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-[340px,1fr] gap-6 items-start h-[780px] max-h-[82vh]">
         {/* Left Sidebar Nav Panel */}
-        <div className="flex flex-col h-full overflow-hidden rounded-2xl border border-line bg-surface/90 shadow-panel-lg backdrop-blur-md">
+        <div className={cn("flex flex-col h-full overflow-hidden rounded-2xl border border-line bg-surface/90 shadow-panel-lg backdrop-blur-md", mobilePanel === 'chat' && 'hidden lg:flex')}>
           {/* Tabs Selector */}
           <div className="grid grid-cols-2 border-b border-line bg-surface-inset/80 p-1.5 gap-1">
             <button
@@ -266,6 +289,7 @@ export function CommunityClient({ initialUser }: { initialUser: { userId: string
                     onClick={() => {
                       setActiveChannel(ch.id);
                       setActiveRecipient(null);
+                      setMobilePanel('chat');
                     }}
                     className={cn(
                       'w-full text-left p-3 rounded-xl transition-all flex items-center gap-3 border',
@@ -309,7 +333,10 @@ export function CommunityClient({ initialUser }: { initialUser: { userId: string
                   return (
                     <button
                       key={m.userId}
-                      onClick={() => setActiveRecipient(m)}
+                      onClick={() => {
+                        setActiveRecipient(m);
+                        setMobilePanel('chat');
+                      }}
                       className={cn(
                         'w-full text-left p-2.5 rounded-xl transition-all flex items-center gap-3 border',
                         isActive
@@ -331,34 +358,43 @@ export function CommunityClient({ initialUser }: { initialUser: { userId: string
         </div>
 
         {/* Right Main Chat Container */}
-        <div className="flex flex-col h-full rounded-2xl border border-line bg-surface/90 shadow-panel-lg backdrop-blur-md overflow-hidden">
+        <div className={cn("relative flex flex-col h-full rounded-2xl border border-line bg-surface/90 shadow-panel-lg backdrop-blur-md overflow-hidden", mobilePanel === 'list' && 'hidden lg:flex')}>
           {/* Header Bar */}
-          <div className="border-b border-line bg-surface-inset/80 px-6 py-4 flex items-center justify-between">
-            {activeTab === 'dms' && activeRecipient ? (
-              <div className="flex items-center gap-3.5">
-                <Avatar name={activeRecipient.fullName} src={activeRecipient.avatarUrl} size="md" />
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h3 className="font-extrabold text-base text-white">{activeRecipient.fullName}</h3>
-                    <span className="font-mono text-xs font-semibold text-cyan">@{activeRecipient.handle}</span>
-                  </div>
-                  <p className="text-xs text-ink-muted">{activeRecipient.jobTitle} • {activeRecipient.org}</p>
-                </div>
-              </div>
-            ) : (
-              <div className="flex items-center gap-3.5">
-                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-cyan/15 text-xl border border-cyan/30">
-                  {currentChannelObj.icon}
-                </span>
-                <div>
-                  <h3 className="font-bold text-base text-white">#{currentChannelObj.name}</h3>
-                  <p className="text-xs text-ink-muted">{currentChannelObj.desc}</p>
-                </div>
-              </div>
-            )}
+          <div className="border-b border-line bg-surface-inset/80 px-4 sm:px-6 py-4 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setMobilePanel('list')}
+                className="lg:hidden rounded-xl border border-cyan/40 bg-cyan/15 px-3 py-1.5 font-mono text-xs font-bold text-cyan hover:bg-cyan/20 flex items-center gap-1.5 shrink-0"
+              >
+                ← Channels
+              </button>
 
-            <span className="rounded-full bg-lime/10 border border-lime/30 px-3 py-1 font-mono text-xs font-semibold text-lime flex items-center gap-2">
-              <span className="h-2 w-2 rounded-full bg-lime animate-pulse" /> Live Real-Time Feed
+              {activeTab === 'dms' && activeRecipient ? (
+                <div className="flex items-center gap-3">
+                  <Avatar name={activeRecipient.fullName} src={activeRecipient.avatarUrl} size="md" />
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-extrabold text-sm sm:text-base text-white truncate">{activeRecipient.fullName}</h3>
+                      <span className="font-mono text-xs font-semibold text-cyan hidden sm:inline">@{activeRecipient.handle}</span>
+                    </div>
+                    <p className="text-xs text-ink-muted truncate">{activeRecipient.jobTitle} • {activeRecipient.org}</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center gap-3">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-cyan/15 text-xl border border-cyan/30">
+                    {currentChannelObj.icon}
+                  </span>
+                  <div className="min-w-0">
+                    <h3 className="font-bold text-sm sm:text-base text-white truncate">#{currentChannelObj.name}</h3>
+                    <p className="text-xs text-ink-muted truncate hidden sm:block">{currentChannelObj.desc}</p>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <span className="rounded-full bg-lime/10 border border-lime/30 px-2.5 sm:px-3 py-1 font-mono text-[11px] sm:text-xs font-semibold text-lime flex items-center gap-1.5 shrink-0">
+              <span className="h-2 w-2 rounded-full bg-lime animate-pulse" /> Live
             </span>
           </div>
 
@@ -418,6 +454,21 @@ export function CommunityClient({ initialUser }: { initialUser: { userId: string
               })
             )}
           </div>
+
+          {/* Floating Unread Messages Indicator */}
+          {hasUnreadBelow && (
+            <button
+              onClick={() => {
+                if (chatFeedRef.current) {
+                  chatFeedRef.current.scrollTo({ top: chatFeedRef.current.scrollHeight, behavior: 'smooth' });
+                }
+                setHasUnreadBelow(false);
+              }}
+              className="absolute bottom-20 left-1/2 -translate-x-1/2 rounded-full border border-cyan/40 bg-cyan px-4 py-2 font-mono text-xs font-bold text-void shadow-glow-cyan transition-all hover:bg-cyan-bright hover:scale-105 z-30 flex items-center gap-2 cursor-pointer"
+            >
+              <span>↓</span> New Messages Below
+            </button>
+          )}
 
           {/* Attachment Preview if any */}
           {attachedImage && (

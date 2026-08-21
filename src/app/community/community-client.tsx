@@ -771,56 +771,99 @@ export function CommunityClient({ initialUser }: { initialUser: { userId: string
                   ? msg.sender?.profile?.fullName || initialUser.fullName
                   : msg.sender?.profile?.fullName || 'BSA Member';
                 const senderHandle = msg.sender?.profile?.handle ? `@${msg.sender.profile.handle}` : '';
+                const senderJob = msg.sender?.profile?.jobTitle || '';
+                const senderOrg = msg.sender?.profile?.org || '';
+
                 const prev = messages[index - 1];
                 const showDay = !prev || new Date(prev.createdAt).toDateString() !== new Date(msg.createdAt).toDateString();
+                const isConsecutive =
+                  !showDay &&
+                  prev &&
+                  prev.senderId === msg.senderId &&
+                  Math.abs(new Date(msg.createdAt).getTime() - new Date(prev.createdAt).getTime()) < 5 * 60_000;
+
+                const formattedTime = msg.pending
+                  ? 'Sending…'
+                  : new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
                 return (
                   <React.Fragment key={msg.id}>
+                    {/* Glowing Date Header Divider */}
                     {showDay && (
-                      <div className="flex items-center gap-3 py-1">
-                        <span className="h-px flex-1 bg-line" />
-                        <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-ink-muted">
-                          {dayLabel(msg.createdAt)}
+                      <div className="flex items-center gap-3 my-4">
+                        <span className="h-px flex-1 bg-gradient-to-r from-transparent via-line to-line" />
+                        <span className="rounded-full border border-cyan/30 bg-surface-raised/90 px-3.5 py-1 font-mono text-[10px] font-extrabold uppercase tracking-widest text-cyan-bright shadow-sm backdrop-blur-md">
+                          🗓️ {dayLabel(msg.createdAt)}
                         </span>
-                        <span className="h-px flex-1 bg-line" />
+                        <span className="h-px flex-1 bg-gradient-to-r from-line via-line to-transparent" />
                       </div>
                     )}
 
-                    <div className={cn('flex items-start gap-3.5', isMe && 'flex-row-reverse', msg.pending && 'opacity-60')}>
-                      <Avatar name={senderName} src={msg.sender?.profile?.avatarUrl} size="sm" />
-                      <div className={cn('max-w-[75%] space-y-1.5', isMe && 'text-right')}>
-                        <div className={cn('flex items-center gap-2 font-mono text-[11px] text-ink-muted', isMe && 'justify-end')}>
-                          <strong className="text-white font-bold">{senderName}</strong>
-                          {senderHandle && <span className="text-cyan">{senderHandle}</span>}
-                          <span>
-                            {msg.pending
-                              ? 'Sending…'
-                              : new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                          </span>
-                          {isMe && inDm && !msg.pending && (
-                            <span
-                              title={peerReadThrough(msg.createdAt) ? 'Seen' : 'Delivered'}
-                              className={peerReadThrough(msg.createdAt) ? 'text-cyan font-bold' : 'text-ink-faint'}
-                            >
-                              {peerReadThrough(msg.createdAt) ? '✓✓ Seen' : '✓ Sent'}
-                            </span>
-                          )}
-                        </div>
+                    <div
+                      className={cn(
+                        'flex items-start gap-3 transition-all duration-200',
+                        isMe && 'flex-row-reverse',
+                        msg.pending && 'opacity-60',
+                        isConsecutive ? 'mt-1' : 'mt-4',
+                      )}
+                    >
+                      {/* Avatar space: only render avatar when not consecutive */}
+                      {!isConsecutive ? (
+                        <Avatar name={senderName} src={msg.sender?.profile?.avatarUrl} size="sm" />
+                      ) : (
+                        <div className="w-9 shrink-0" />
+                      )}
 
+                      <div className={cn('max-w-[78%] space-y-1', isMe && 'text-right')}>
+                        {/* Header Details (Sender Name, Handle, Job/Org, Time): Only show when not consecutive */}
+                        {!isConsecutive && (
+                          <div className={cn('flex flex-wrap items-center gap-1.5 font-mono text-[11px] text-ink-muted mb-1', isMe && 'justify-end')}>
+                            <strong className="text-white font-bold">{senderName}</strong>
+                            {senderHandle && <span className="text-cyan font-medium">{senderHandle}</span>}
+                            {(senderJob || senderOrg) && (
+                              <span className="hidden sm:inline-block rounded bg-surface-inset border border-line px-1.5 py-0.2 font-sans text-[10px] text-ink-muted">
+                                {senderJob} {senderOrg ? `@ ${senderOrg}` : ''}
+                              </span>
+                            )}
+                            <span className="text-ink-faint text-[10px]">· {formattedTime}</span>
+                            {isMe && inDm && !msg.pending && (
+                              <span
+                                title={peerReadThrough(msg.createdAt) ? 'Seen by recipient' : 'Delivered to server'}
+                                className={cn('font-bold text-[10px] ml-1', peerReadThrough(msg.createdAt) ? 'text-cyan' : 'text-ink-faint')}
+                              >
+                                {peerReadThrough(msg.createdAt) ? '✓✓ Seen' : '✓ Sent'}
+                              </span>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Message Bubble */}
                         <div
                           className={cn(
-                            'p-4 rounded-2xl text-sm leading-relaxed shadow-sm',
+                            'p-3.5 sm:p-4 rounded-2xl text-sm leading-relaxed shadow-sm relative group',
                             isMe
-                              ? 'bg-gradient-to-r from-cyan/20 to-cyan/10 border border-cyan/40 text-white rounded-tr-sm'
-                              : 'bg-surface-raised border border-line text-ink rounded-tl-sm',
+                              ? 'bg-gradient-to-r from-cyan/25 via-cyan/15 to-cyan/10 border border-cyan/40 text-white rounded-tr-xs shadow-[0_2px_10px_rgba(6,182,212,0.1)]'
+                              : 'bg-surface-raised/90 border border-line text-ink rounded-tl-xs hover:border-line-bright',
                           )}
                         >
                           {msg.content && <p className="whitespace-pre-wrap break-words">{msg.content}</p>}
 
                           {msg.imageUrl && (
-                            <div className="mt-3 rounded-xl overflow-hidden border border-line">
-                              <img src={msg.imageUrl} alt="Attachment" loading="lazy" className="max-h-72 max-w-full object-cover" />
+                            <div className="mt-3 rounded-xl overflow-hidden border border-line max-w-sm">
+                              <img src={msg.imageUrl} alt="Attachment" loading="lazy" className="max-h-72 w-full object-cover" />
                             </div>
+                          )}
+
+                          {/* Hover timestamp for consecutive messages */}
+                          {isConsecutive && (
+                            <span
+                              className={cn(
+                                'absolute top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity font-mono text-[9px] text-ink-faint px-2 pointer-events-none whitespace-nowrap',
+                                isMe ? '-left-14' : '-right-14',
+                              )}
+                            >
+                              {formattedTime}
+                            </span>
                           )}
                         </div>
                       </div>

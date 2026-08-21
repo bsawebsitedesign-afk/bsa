@@ -652,46 +652,58 @@ export function Navbar({ session }: { session: NavSession | null }) {
                 </motion.div>
               ))}
 
-              <div className="mt-7 grid grid-cols-2 gap-3">
+              <div className="mt-7 flex flex-col gap-3">
                 {session ? (
                   <>
-                    <Link
-                      href="/dashboard"
-                      className="rounded-md bg-grad-brand px-4 py-3 text-center text-sm font-semibold text-on-accent"
-                    >
-                      Dashboard
-                    </Link>
-                    {session.role === 'ADMIN' ? (
+                    <div className="grid grid-cols-2 gap-3">
                       <Link
-                        href="/admin"
-                        className="rounded-md border border-violet/40 bg-violet/10 px-4 py-3 text-center text-sm font-semibold text-violet-bright"
+                        href="/dashboard"
+                        className="rounded-xl bg-grad-brand px-4 py-3 text-center font-sans text-xs font-bold text-on-accent shadow-sm"
                       >
-                        Admin console
+                        👤 My Dashboard
                       </Link>
-                    ) : (
-                      <button
-                        onClick={signOut}
-                        className="rounded-md border border-line bg-surface-raised px-4 py-3 text-center text-sm font-semibold text-rose"
-                      >
-                        Sign out
-                      </button>
-                    )}
+                      {session.role === 'ADMIN' ? (
+                        <Link
+                          href="/admin"
+                          className="rounded-xl border border-violet/40 bg-violet/15 px-4 py-3 text-center font-sans text-xs font-bold text-violet-bright shadow-sm"
+                        >
+                          ⚡ Admin Console
+                        </Link>
+                      ) : (
+                        <Link
+                          href="/community"
+                          className="rounded-xl border border-cyan/40 bg-cyan/15 px-4 py-3 text-center font-sans text-xs font-bold text-cyan shadow-sm"
+                        >
+                          💬 Community Hub
+                        </Link>
+                      )}
+                    </div>
+
+                    <button
+                      type="button"
+                      disabled={signingOut}
+                      onClick={signOut}
+                      className="w-full flex items-center justify-center gap-2 rounded-xl border border-rose/40 bg-rose/10 px-4 py-3.5 font-sans text-xs font-extrabold text-rose-bright hover:bg-rose/20 transition-all shadow-sm disabled:opacity-50"
+                    >
+                      <SignOut weight="bold" className="h-4 w-4" />
+                      {signingOut ? 'Signing out of BSA…' : `Sign Out (@${session.handle || 'member'})`}
+                    </button>
                   </>
                 ) : (
-                  <>
+                  <div className="grid grid-cols-2 gap-3">
                     <Link
                       href="/login"
-                      className="rounded-md border border-line bg-surface-raised px-4 py-3 text-center text-sm font-semibold text-ink"
+                      className="rounded-xl border border-line bg-surface-raised px-4 py-3 text-center text-sm font-semibold text-ink"
                     >
                       Sign in
                     </Link>
                     <Link
                       href="/register"
-                      className="rounded-md bg-cyan px-4 py-3 text-center font-display text-sm font-bold text-void shadow-glow-cyan"
+                      className="rounded-xl bg-cyan px-4 py-3 text-center font-display text-sm font-bold text-void shadow-glow-cyan"
                     >
                       Join BSA
                     </Link>
-                  </>
+                  </div>
                 )}
               </div>
             </nav>

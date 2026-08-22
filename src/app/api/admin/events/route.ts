@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { revalidatePath } from 'next/cache';
 import { prisma } from '@/lib/prisma';
 import { requireAdmin } from '@/lib/auth';
 import { route, readBody, guard, jsonOk, ApiError } from '@/lib/api';
@@ -34,7 +35,7 @@ export const POST = route(async (req) => {
       tickets: {
         create: [
           {
-            name: data.ticketName,
+            name: data.ticketName || 'Standard Entry',
             price: data.ticketPrice,
             currency: 'USD',
             quantityAvailable: data.maxCapacity,
@@ -44,6 +45,11 @@ export const POST = route(async (req) => {
     },
     include: { tickets: true },
   });
+
+  revalidatePath('/events');
+  revalidatePath('/events/[slug]', 'page');
+  revalidatePath('/admin');
+  revalidatePath('/');
 
   return jsonOk({ event }, 201);
 });
@@ -68,6 +74,35 @@ export const PATCH = route(async (req) => {
     include: { tickets: true },
   });
 
+  // Update underlying ticket price / name when edited in Admin Portal
+  if (ticketPrice !== undefined || ticketName !== undefined) {
+    const existingTicket = await prisma.eventTicket.findFirst({ where: { eventId: id } });
+    if (existingTicket) {
+      await prisma.eventTicket.update({
+        where: { id: existingTicket.id },
+        data: {
+          ...(ticketPrice !== undefined ? { price: ticketPrice } : {}),
+          ...(ticketName !== undefined ? { name: ticketName } : {}),
+        },
+      });
+    } else if (ticketPrice !== undefined) {
+      await prisma.eventTicket.create({
+        data: {
+          eventId: id,
+          name: ticketName || 'Standard Entry',
+          price: ticketPrice,
+          currency: 'USD',
+          quantityAvailable: fields.maxCapacity ?? 100,
+        },
+      });
+    }
+  }
+
+  revalidatePath('/events');
+  revalidatePath('/events/[slug]', 'page');
+  revalidatePath('/admin');
+  revalidatePath('/');
+
   return jsonOk({ event });
 });
 
@@ -79,5 +114,11 @@ export const DELETE = route(async (req) => {
   if (!id) throw new ApiError('Which event?', 400);
 
   await prisma.event.delete({ where: { id } });
+
+  revalidatePath('/events');
+  revalidatePath('/events/[slug]', 'page');
+  revalidatePath('/admin');
+  revalidatePath('/');
+
   return jsonOk({ deleted: id });
 });

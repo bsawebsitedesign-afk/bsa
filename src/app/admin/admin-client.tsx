@@ -2614,18 +2614,23 @@ function MembersPanel({
 function EventsPanel({ events }: { events: AdminEvent[] }) {
   const actions = useAdminActions();
   const remove = useDeleteFlow(actions, (id) => `/api/admin/events?id=${id}`, 'Event deleted');
+  const [items, setItems] = useState<AdminEvent[]>(events);
   const [query, setQuery] = useState('');
-  const [status, setStatus] = useState<string>('ALL');
+  const [status, setStatus] = useState('ALL');
   const [editing, setEditing] = useState<AdminEvent | null>(null);
   const [open, setOpen] = useState(false);
 
+  useEffect(() => {
+    setItems(events);
+  }, [events]);
+
   const visible = useMemo(
     () =>
-      events.filter((event) => {
+      items.filter((event) => {
         if (status !== 'ALL' && event.status !== status) return false;
         return matches(query, event.title, event.location, event.category, event.venueName);
       }),
-    [events, query, status],
+    [items, query, status],
   );
 
   async function save(payload: Record<string, unknown>, method: 'POST' | 'PATCH') {
@@ -2638,7 +2643,34 @@ function EventsPanel({ events }: { events: AdminEvent[] }) {
       successBody: String(payload.title ?? editing?.title ?? ''),
       silent: true,
     });
+
+    if (res.ok) {
+      if (method === 'PATCH' && editing) {
+        setItems((prev) =>
+          prev.map((e) => {
+            if (e.id !== editing.id) return e;
+            const updatedPrice = payload.ticketPrice !== undefined ? Number(payload.ticketPrice) : e.ticketPrice;
+            return {
+              ...e,
+              ...payload,
+              ticketPrice: updatedPrice,
+              isPaid: updatedPrice > 0,
+              cpdHours: payload.cpdHours !== undefined ? Number(payload.cpdHours) : e.cpdHours,
+              maxCapacity: payload.maxCapacity !== undefined ? Number(payload.maxCapacity) : e.maxCapacity,
+            } as AdminEvent;
+          }),
+        );
+      }
+    }
     return res.ok ? null : res.error;
+  }
+
+  async function confirmDelete() {
+    const id = remove.target?.id;
+    await remove.confirm();
+    if (id) {
+      setItems((prev) => prev.filter((e) => e.id !== id));
+    }
   }
 
   return (
@@ -2678,7 +2710,7 @@ function EventsPanel({ events }: { events: AdminEvent[] }) {
         </div>
         <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
           <FilterChip active={status === 'ALL'} onClick={() => setStatus('ALL')}>
-            All {events.length}
+            All {items.length}
           </FilterChip>
           {EVENT_STATUSES.map((value) => (
             <FilterChip
@@ -2694,14 +2726,14 @@ function EventsPanel({ events }: { events: AdminEvent[] }) {
 
       {visible.length === 0 ? (
         <EmptyState
-          title={events.length === 0 ? 'No events yet' : 'Nothing matches that'}
+          title={items.length === 0 ? 'No events yet' : 'Nothing matches that'}
           blurb={
-            events.length === 0
+            items.length === 0
               ? 'The calendar is empty. A twelve-person roundtable still counts as an event.'
               : 'Try a different word, or clear the status filter.'
           }
           action={
-            events.length === 0 ? (
+            items.length === 0 ? (
               <Button
                 tone="lime"
                 onClick={() => {
@@ -2822,7 +2854,7 @@ function EventsPanel({ events }: { events: AdminEvent[] }) {
         pending={remove.pending}
         error={remove.error}
         onClose={remove.close}
-        onConfirm={remove.confirm}
+        onConfirm={confirmDelete}
       />
     </div>
   );

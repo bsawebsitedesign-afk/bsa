@@ -14,6 +14,9 @@ import { formatDate, formatDay, formatMonth, parseJson, relativeTime } from '@/l
 import { formatMoney } from '@/lib/payment';
 import { RegisterClient, type TicketOption } from './register-client';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 interface AgendaItem {
   time: string;
   title: string;

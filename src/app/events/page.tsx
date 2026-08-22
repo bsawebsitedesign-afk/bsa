@@ -13,7 +13,8 @@ import { formatDay, formatMonth, relativeTime } from '@/lib/utils';
 import { formatMoney } from '@/lib/payment';
 import { EventsClient, type EventCard } from './events-client';
 
-export const revalidate = 30;
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 export const metadata: Metadata = {
   title: 'Events',

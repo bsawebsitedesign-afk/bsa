@@ -2,7 +2,7 @@
 
 import React, { useCallback, useEffect, useRef } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
-import { X } from '@phosphor-icons/react/dist/ssr';
+import { X } from '@phosphor-icons/react';
 import { cn, type Accent } from '@/lib/utils';
 
 /**

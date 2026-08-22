@@ -2,7 +2,7 @@
 
 import React, { createContext, useCallback, useContext, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
-import { X } from '@phosphor-icons/react/dist/ssr';
+import { X } from '@phosphor-icons/react';
 import { cn } from '@/lib/utils';
 
 export type ToastTone = 'success' | 'error' | 'info' | 'lime' | 'magenta' | 'violet' | 'tangerine';

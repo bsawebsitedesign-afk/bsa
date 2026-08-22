@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Check, MagnifyingGlass, X } from '@phosphor-icons/react/dist/ssr';
+import { Check, MagnifyingGlass, X } from '@phosphor-icons/react';
 import { cn } from '@/lib/utils';
 
 /**

@@ -4,7 +4,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { AnimatePresence, motion, useMotionValueEvent, useScroll } from 'framer-motion';
-import { CaretDown, MagnifyingGlass, SignOut } from '@phosphor-icons/react/dist/ssr';
+import { CaretDown, MagnifyingGlass, SignOut } from '@phosphor-icons/react';
 import { Logo } from './logo';
 import { ScrollProgress } from './ui/scroll';
 import { NotificationBell } from './notification-bell';

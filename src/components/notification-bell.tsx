@@ -3,7 +3,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Bell, CheckCircle, Megaphone, PushPin, Warning, Info, Sparkle } from '@phosphor-icons/react/dist/ssr';
+import { Bell, CheckCircle, Megaphone, PushPin, Warning, Info, Sparkle } from '@phosphor-icons/react';
 
 export interface SiteNotificationItem {
   id: string;

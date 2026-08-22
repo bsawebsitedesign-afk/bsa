@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Bell, Megaphone, Trash, PushPin, Warning, CheckCircle, Info, Sparkle, PaperPlaneRight, ArrowSquareOut } from '@phosphor-icons/react/dist/ssr';
+import { Bell, Megaphone, Trash, PushPin, Warning, CheckCircle, Info, Sparkle, PaperPlaneRight, ArrowSquareOut } from '@phosphor-icons/react';
 import { useToast } from '@/components/ui/toast';
 
 export interface AdminNotification {

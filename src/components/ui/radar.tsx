@@ -130,8 +130,15 @@ export function GlobalSecurityRadar({
       return chapters.map((ch, idx) => {
         const lat = ch.latitude ?? 40.71;
         const lng = ch.longitude ?? -74.01;
-        const angle = Math.round((lng + 180) % 360);
-        const distance = Math.min(85, Math.max(25, Math.round(25 + ((90 - lat) / 180) * 60)));
+
+        // Smart geographic-to-radar polar projection with sector distribution
+        // Map longitude (-180..+180) to angle (0..360) and latitude (-90..+90) to radial distance
+        let angle = Math.round((lng + 180) % 360);
+        let distance = Math.min(82, Math.max(30, Math.round(30 + ((85 - lat) / 170) * 52)));
+
+        // Slight micro-offset for identical coordinates to prevent stacked dots
+        angle = (angle + (idx * 5) % 15) % 360;
+
         const pingMs = 20 + ((idx * 7) % 30);
 
         return {
@@ -171,7 +178,7 @@ export function GlobalSecurityRadar({
       const width = canvas.width;
       const height = canvas.height;
       const center = width / 2;
-      const radius = center * 0.86;
+      const radius = center * 0.84;
 
       ctx.clearRect(0, 0, width, height);
 
@@ -209,7 +216,7 @@ export function GlobalSecurityRadar({
       // Rotating Radar Beam (Conic Gradient)
       const sweepAngle = (angle * Math.PI) / 180;
       const grad = ctx.createConicGradient(sweepAngle, center, center);
-      grad.addColorStop(0, 'rgba(6, 182, 212, 0.45)');
+      grad.addColorStop(0, 'rgba(6, 182, 212, 0.42)');
       grad.addColorStop(0.12, 'rgba(6, 182, 212, 0.08)');
       grad.addColorStop(0.28, 'rgba(6, 182, 212, 0.0)');
       grad.addColorStop(1, 'rgba(6, 182, 212, 0.0)');
@@ -230,22 +237,26 @@ export function GlobalSecurityRadar({
       ctx.stroke();
       ctx.shadowBlur = 0;
 
-      // Render Chapter Beacons
-      displayChapters.forEach((ch) => {
+      // First Pass: Calculate Screen Positions of Nodes
+      const nodesWithPos = displayChapters.map((ch) => {
         const rad = (ch.angle * Math.PI) / 180;
         const dist = (ch.distance / 100) * radius;
         const x = center + dist * Math.cos(rad);
         const y = center + dist * Math.sin(rad);
+        return { ch, x, y };
+      });
 
+      // Render Beacon Dots
+      nodesWithPos.forEach(({ ch, x, y }) => {
         const isSelected = activeChapter.slug === ch.slug;
         const isHover = hovered?.slug === ch.slug;
 
         // Outer Beacon Ring
         ctx.strokeStyle = isSelected
-          ? 'rgba(0, 240, 255, 0.9)'
+          ? 'rgba(0, 240, 255, 0.95)'
           : isHover
-          ? 'rgba(198, 244, 50, 0.9)'
-          : 'rgba(6, 182, 212, 0.4)';
+          ? 'rgba(198, 244, 50, 0.95)'
+          : 'rgba(6, 182, 212, 0.5)';
         ctx.lineWidth = isSelected || isHover ? 2 : 1;
         ctx.beginPath();
         ctx.arc(x, y, isSelected ? 8 : 6, 0, Math.PI * 2);
@@ -254,16 +265,99 @@ export function GlobalSecurityRadar({
         // Pulsing Solid Core
         ctx.fillStyle = isSelected ? '#00F0FF' : isHover ? '#C6F432' : '#22D3EE';
         ctx.shadowColor = isSelected ? '#00F0FF' : '#22D3EE';
-        ctx.shadowBlur = isSelected ? 12 : 4;
+        ctx.shadowBlur = isSelected ? 14 : 4;
         ctx.beginPath();
         ctx.arc(x, y, isSelected ? 4 : 3, 0, Math.PI * 2);
         ctx.fill();
         ctx.shadowBlur = 0;
+      });
 
-        // City Label near beacon
-        ctx.fillStyle = isSelected ? '#FFFFFF' : 'rgba(255, 255, 255, 0.7)';
+      // Second Pass: De-conflicted Label Placement with Dark Pill Backgrounds & Leader Lines
+      interface PlacedLabel {
+        x: number;
+        y: number;
+        w: number;
+        h: number;
+      }
+      const placedLabels: PlacedLabel[] = [];
+
+      nodesWithPos.forEach(({ ch, x, y }) => {
+        const cityName = ch.city.split(',')[0].trim();
+        const isSelected = activeChapter.slug === ch.slug;
+
         ctx.font = isSelected ? 'bold 10px monospace' : '9px monospace';
-        ctx.fillText(ch.city.split(',')[0], x + 9, y + 3);
+        const textWidth = ctx.measureText(cityName).width;
+        const pillWidth = textWidth + 10;
+        const pillHeight = 15;
+
+        // Candidate offsets relative to dot (Right, Left, Bottom, Top, Diagonals)
+        const candidates = [
+          { lx: x + 12, ly: y - 7, align: 'left', drawX: x + 12, drawY: y - 7 },
+          { lx: x - pillWidth - 12, ly: y - 7, align: 'right', drawX: x - 12, drawY: y - 7 },
+          { lx: x - pillWidth / 2, ly: y + 12, align: 'center', drawX: x, drawY: y + 12 },
+          { lx: x - pillWidth / 2, ly: y - 22, align: 'center', drawX: x, drawY: y - 22 },
+          { lx: x + 14, ly: y + 10, align: 'left', drawX: x + 14, drawY: y + 10 },
+          { lx: x - pillWidth - 14, ly: y + 10, align: 'right', drawX: x - 14, drawY: y + 10 },
+        ];
+
+        // Choose candidate that does not collide with already placed labels
+        let chosen = candidates[0];
+        for (const cand of candidates) {
+          const candBox = { x: cand.lx, y: cand.ly, w: pillWidth, h: pillHeight };
+          const collides = placedLabels.some((prev) => {
+            return !(
+              candBox.x + candBox.w + 4 < prev.x ||
+              candBox.x > prev.x + prev.w + 4 ||
+              candBox.y + candBox.h + 2 < prev.y ||
+              candBox.y > prev.y + prev.h + 2
+            );
+          });
+
+          if (!collides) {
+            chosen = cand;
+            break;
+          }
+        }
+
+        // Clamp label inside canvas bounds
+        let finalLx = Math.max(4, Math.min(width - pillWidth - 4, chosen.lx));
+        let finalLy = Math.max(4, Math.min(height - pillHeight - 4, chosen.ly));
+
+        placedLabels.push({ x: finalLx, y: finalLy, w: pillWidth, h: pillHeight });
+
+        // Draw leader line if label is displaced significantly
+        const centerPillX = finalLx + pillWidth / 2;
+        const centerPillY = finalLy + pillHeight / 2;
+        const distFromDot = Math.hypot(centerPillX - x, centerPillY - y);
+
+        if (distFromDot > 18) {
+          ctx.strokeStyle = isSelected ? 'rgba(0, 240, 255, 0.6)' : 'rgba(6, 182, 212, 0.35)';
+          ctx.lineWidth = 1;
+          ctx.setLineDash([2, 2]);
+          ctx.beginPath();
+          ctx.moveTo(x, y);
+          ctx.lineTo(centerPillX, centerPillY);
+          ctx.stroke();
+          ctx.setLineDash([]);
+        }
+
+        // Draw Pill Background Box for ultra legibility
+        ctx.fillStyle = isSelected ? 'rgba(7, 14, 28, 0.92)' : 'rgba(11, 15, 25, 0.85)';
+        ctx.strokeStyle = isSelected ? 'rgba(0, 240, 255, 0.8)' : 'rgba(6, 182, 212, 0.35)';
+        ctx.lineWidth = isSelected ? 1.5 : 1;
+
+        // Rounded Rect Pill
+        const radius = 3;
+        ctx.beginPath();
+        ctx.roundRect(finalLx, finalLy, pillWidth, pillHeight, radius);
+        ctx.fill();
+        ctx.stroke();
+
+        // Draw City Text inside Pill
+        ctx.fillStyle = isSelected ? '#00F0FF' : '#E2E8F0';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(cityName, finalLx + 5, finalLy + pillHeight / 2 + 0.5);
       });
 
       angle = (angle + 1.2) % 360;
@@ -296,7 +390,7 @@ export function GlobalSecurityRadar({
         <div className="flex items-center gap-2">
           <span className="h-1.5 w-1.5 rounded-full bg-lime animate-pulse" />
           <span className="font-mono text-[10px] font-bold text-lime uppercase tracking-wider">
-            5 HUBS CONNECTED · {activeChapter.ping}ms
+            {displayChapters.length} HUBS CONNECTED · {activeChapter.ping}ms
           </span>
         </div>
       </div>

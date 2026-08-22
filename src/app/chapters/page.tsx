@@ -12,7 +12,8 @@ import { Counter } from '@/components/ui/counter';
 import { Avatar, EmptyState, SectionHead, Sticker, Stat } from '@/components/ui/misc';
 import { accentClasses, accentFor, type Accent } from '@/lib/utils';
 
-export const revalidate = 30;
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 export const metadata: Metadata = {
   title: 'Regional chapters',

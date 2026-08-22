@@ -106,6 +106,7 @@ const DEFAULT_REAL_CHAPTERS: ChapterNode[] = [
 
 export function GlobalSecurityRadar({
   className,
+  chapters,
 }: {
   className?: string;
   chapters?: Array<{
@@ -114,14 +115,48 @@ export function GlobalSecurityRadar({
     region: string;
     city: string;
     country: string;
-    emoji?: string;
+    latitude?: number | null;
+    longitude?: number | null;
+    emoji?: string | null;
+    meetingCadence?: string | null;
+    contactEmail?: string | null;
+    isActive?: boolean;
   }>;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [activeChapter, setActiveChapter] = useState<ChapterNode>(DEFAULT_REAL_CHAPTERS[0]);
-  const [hovered, setHovered] = useState<ChapterNode | null>(null);
 
-  const displayChapters = DEFAULT_REAL_CHAPTERS;
+  const displayChapters: ChapterNode[] = React.useMemo(() => {
+    if (chapters && chapters.length > 0) {
+      return chapters.map((ch, idx) => {
+        const lat = ch.latitude ?? 40.71;
+        const lng = ch.longitude ?? -74.01;
+        const angle = Math.round((lng + 180) % 360);
+        const distance = Math.min(85, Math.max(25, Math.round(25 + ((90 - lat) / 180) * 60)));
+        const pingMs = 20 + ((idx * 7) % 30);
+
+        return {
+          slug: ch.slug,
+          name: ch.name,
+          city: ch.city,
+          region: ch.region,
+          country: ch.country,
+          lead: ch.name.replace('BSA ', '') + ' Lead',
+          cadence: ch.meetingCadence || 'Quarterly Sessions',
+          coordinates: `${Math.abs(lat).toFixed(2)}° ${lat >= 0 ? 'N' : 'S'}, ${Math.abs(lng).toFixed(2)}° ${lng >= 0 ? 'E' : 'W'}`,
+          contactEmail: ch.contactEmail || `${ch.slug}@businesssecurityalliance.com`,
+          angle,
+          distance,
+          active: ch.isActive ?? true,
+          ping: pingMs,
+          emoji: ch.emoji || '⬡',
+        };
+      });
+    }
+    return DEFAULT_REAL_CHAPTERS;
+  }, [chapters]);
+
+  const [activeChapter, setActiveChapter] = useState<ChapterNode>(displayChapters[0] || DEFAULT_REAL_CHAPTERS[0]);
+  const [hovered, setHovered] = useState<ChapterNode | null>(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;

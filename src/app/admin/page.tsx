@@ -7,6 +7,7 @@ import { parseList } from '@/lib/utils';
 import {
   AdminClient,
   type AdminApplication,
+  type AdminChapter,
   type AdminEvent,
   type AdminLead,
   type AdminMember,
@@ -48,6 +49,7 @@ export default async function AdminPage() {
   let leadRows: any[] = [];
   let applicationRows: any[] = [];
   let signupRows: any[] = [];
+  let chapterRows: any[] = [];
 
   try {
     const fetched = await Promise.all([
@@ -224,6 +226,29 @@ export default async function AdminPage() {
         opportunity: { select: { title: true, slug: true, org: true } },
       },
     }),
+
+    prisma.chapter.findMany({
+      orderBy: { name: 'asc' },
+      select: {
+        id: true,
+        slug: true,
+        name: true,
+        city: true,
+        country: true,
+        region: true,
+        description: true,
+        imageUrl: true,
+        latitude: true,
+        longitude: true,
+        emoji: true,
+        accent: true,
+        meetingCadence: true,
+        linkedinUrl: true,
+        contactEmail: true,
+        isActive: true,
+        _count: { select: { memberships: true } },
+      },
+    }),
   ]);
 
   counts = (fetched[0] ?? [0, 0, 0, 0, 0, 0, 0, 0]) as any;
@@ -235,6 +260,7 @@ export default async function AdminPage() {
   resourceRows = fetched[6] ?? [];
   leadRows = fetched[7] ?? [];
   applicationRows = fetched[8] ?? [];
+  chapterRows = fetched[9] ?? [];
   } catch (err) {
     console.error('Admin Page DB Error:', err);
   }
@@ -387,6 +413,26 @@ export default async function AdminPage() {
     opportunityOrg: row.opportunity.org,
   }));
 
+  const chapters: AdminChapter[] = chapterRows.map((row) => ({
+    id: row.id,
+    slug: row.slug,
+    name: row.name,
+    city: row.city,
+    country: row.country,
+    region: row.region,
+    description: row.description,
+    imageUrl: row.imageUrl,
+    latitude: row.latitude,
+    longitude: row.longitude,
+    emoji: row.emoji,
+    accent: row.accent,
+    meetingCadence: row.meetingCadence,
+    linkedinUrl: row.linkedinUrl,
+    contactEmail: row.contactEmail,
+    isActive: row.isActive,
+    membersCount: row._count.memberships,
+  }));
+
   return (
     <AdminClient
       adminEmail={session.email}
@@ -413,6 +459,7 @@ export default async function AdminPage() {
       posts={posts}
       resources={resources}
       leads={leads}
+      chapters={chapters}
     />
   );
 }

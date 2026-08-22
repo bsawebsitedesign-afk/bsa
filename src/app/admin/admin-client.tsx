@@ -179,6 +179,26 @@ export interface AdminLead {
   createdAt: string;
 }
 
+export interface AdminChapter {
+  id: string;
+  slug: string;
+  name: string;
+  city: string;
+  country: string;
+  region: string;
+  description: string;
+  imageUrl: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  emoji: string;
+  accent: string;
+  meetingCadence: string;
+  linkedinUrl: string | null;
+  contactEmail: string | null;
+  isActive: boolean;
+  membersCount?: number;
+}
+
 /* ========================================================================== */
 /* Constants  */
 /* ========================================================================== */
@@ -189,6 +209,7 @@ type TabKey =
   | 'scripts'
   | 'requests'
   | 'members'
+  | 'chapters'
   | 'events'
   | 'opportunities'
   | 'applications'
@@ -204,6 +225,7 @@ const TABS: Array<{ key: TabKey; label: string; emoji: string }> = [
   { key: 'scripts', label: 'Header & Footer Code', emoji: '🏷️' },
   { key: 'requests', label: 'Access Requests', emoji: '🔐' },
   { key: 'members', label: 'Members', emoji: '👤' },
+  { key: 'chapters', label: 'Chapters Radar', emoji: '🌐' },
   { key: 'events', label: 'Events', emoji: '🎟️' },
   { key: 'opportunities', label: 'Opportunities', emoji: '💼' },
   { key: 'applications', label: 'Applications', emoji: '📝' },
@@ -3897,6 +3919,450 @@ function LeadsPanel({ leads }: { leads: AdminLead[] }) {
 }
 
 /* ========================================================================== */
+/* Chapters Radar Management  */
+/* ========================================================================== */
+
+type ChapterForm = {
+  name: string;
+  city: string;
+  country: string;
+  region: string;
+  description: string;
+  emoji: string;
+  accent: string;
+  meetingCadence: string;
+  latitude: string;
+  longitude: string;
+  contactEmail: string;
+  linkedinUrl: string;
+  isActive: boolean;
+};
+
+function blankChapter(): ChapterForm {
+  return {
+    name: '',
+    city: '',
+    country: 'United States',
+    region: '',
+    description: '',
+    emoji: '🌐',
+    accent: 'violet',
+    meetingCadence: 'Monthly',
+    latitude: '',
+    longitude: '',
+    contactEmail: '',
+    linkedinUrl: '',
+    isActive: true,
+  };
+}
+
+function chapterToForm(ch: AdminChapter): ChapterForm {
+  return {
+    name: ch.name,
+    city: ch.city,
+    country: ch.country || 'United States',
+    region: ch.region,
+    description: ch.description,
+    emoji: ch.emoji || '🌐',
+    accent: ch.accent || 'violet',
+    meetingCadence: ch.meetingCadence || 'Monthly',
+    latitude: ch.latitude !== null && ch.latitude !== undefined ? String(ch.latitude) : '',
+    longitude: ch.longitude !== null && ch.longitude !== undefined ? String(ch.longitude) : '',
+    contactEmail: ch.contactEmail || '',
+    linkedinUrl: ch.linkedinUrl || '',
+    isActive: ch.isActive,
+  };
+}
+
+function ChapterModal({
+  open,
+  editing,
+  pending,
+  onClose,
+  onSave,
+}: {
+  open: boolean;
+  editing: AdminChapter | null;
+  pending: boolean;
+  onClose: () => void;
+  onSave: (payload: Record<string, unknown>, method: 'POST' | 'PATCH') => Promise<string | null>;
+}) {
+  const [form, setForm] = useState<ChapterForm>(blankChapter);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    setForm(editing ? chapterToForm(editing) : blankChapter());
+    setError(null);
+  }, [open, editing]);
+
+  const set = <K extends keyof ChapterForm>(key: K, value: ChapterForm[K]) =>
+    setForm((current) => ({ ...current, [key]: value }));
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    const payload: Record<string, unknown> = {
+      ...(editing ? { id: editing.id } : {}),
+      name: form.name,
+      city: form.city,
+      country: form.country,
+      region: form.region,
+      description: form.description,
+      emoji: form.emoji || '🌐',
+      accent: form.accent || 'violet',
+      meetingCadence: form.meetingCadence || 'Monthly',
+      isActive: form.isActive,
+      ...(form.contactEmail ? { contactEmail: form.contactEmail } : {}),
+      ...(form.linkedinUrl ? { linkedinUrl: form.linkedinUrl } : {}),
+      ...(form.latitude ? { latitude: parseFloat(form.latitude) } : {}),
+      ...(form.longitude ? { longitude: parseFloat(form.longitude) } : {}),
+    };
+
+    const message = await onSave(payload, editing ? 'PATCH' : 'POST');
+    if (message) setError(message);
+    else onClose();
+  }
+
+  return (
+    <Modal
+      open={open}
+      onClose={onClose}
+      title={editing ? 'Edit Chapter' : 'New Chapter'}
+      kicker="Global Chapter Radar"
+      tone="violet"
+      size="lg"
+    >
+      <form onSubmit={submit} className="space-y-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <Field label="Chapter Name" htmlFor="ch-name" required>
+            <Input
+              id="ch-name"
+              required
+              value={form.name}
+              onChange={(e) => set('name', e.target.value)}
+              placeholder="BSA Tokyo"
+            />
+          </Field>
+          <Field label="City" htmlFor="ch-city" required hint="Auto-geocodes on Radar">
+            <Input
+              id="ch-city"
+              required
+              value={form.city}
+              onChange={(e) => set('city', e.target.value)}
+              placeholder="Tokyo"
+            />
+          </Field>
+        </div>
+
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <Field label="Country" htmlFor="ch-country">
+            <Input
+              id="ch-country"
+              value={form.country}
+              onChange={(e) => set('country', e.target.value)}
+              placeholder="Japan"
+            />
+          </Field>
+          <Field label="Region" htmlFor="ch-region" required>
+            <Input
+              id="ch-region"
+              required
+              value={form.region}
+              onChange={(e) => set('region', e.target.value)}
+              placeholder="East Asia"
+            />
+          </Field>
+          <Field label="Meeting Cadence" htmlFor="ch-cadence">
+            <Input
+              id="ch-cadence"
+              value={form.meetingCadence}
+              onChange={(e) => set('meetingCadence', e.target.value)}
+              placeholder="Monthly Sessions"
+            />
+          </Field>
+        </div>
+
+        <Field label="Description" htmlFor="ch-desc" required>
+          <Textarea
+            id="ch-desc"
+            required
+            value={form.description}
+            onChange={(e) => set('description', e.target.value)}
+            placeholder="Chapter summary for local security practitioners..."
+          />
+        </Field>
+
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <Field label="Emoji" htmlFor="ch-emoji">
+            <Input
+              id="ch-emoji"
+              value={form.emoji}
+              onChange={(e) => set('emoji', e.target.value)}
+              placeholder="🗼"
+            />
+          </Field>
+          <Field label="Latitude (Optional)" htmlFor="ch-lat" hint="e.g. 35.67">
+            <Input
+              id="ch-lat"
+              type="number"
+              step="any"
+              value={form.latitude}
+              onChange={(e) => set('latitude', e.target.value)}
+              placeholder="35.6762"
+            />
+          </Field>
+          <Field label="Longitude (Optional)" htmlFor="ch-lng" hint="e.g. 139.65">
+            <Input
+              id="ch-lng"
+              type="number"
+              step="any"
+              value={form.longitude}
+              onChange={(e) => set('longitude', e.target.value)}
+              placeholder="139.6503"
+            />
+          </Field>
+        </div>
+
+        <Toggle
+          checked={form.isActive}
+          onChange={(next) => set('isActive', next)}
+          label="Active on Radar"
+          description={form.isActive ? 'Visible on global radar & chapter lists' : 'Hidden from radar'}
+        />
+
+        {error && <FieldError>{error}</FieldError>}
+
+        <ModalActions
+          pending={pending}
+          onCancel={onClose}
+          submitLabel={editing ? 'Save changes' : 'Add chapter to Radar'}
+        />
+      </form>
+    </Modal>
+  );
+}
+
+function ChaptersPanel({ chapters }: { chapters: AdminChapter[] }) {
+  const router = useRouter();
+  const actions = useAdminActions();
+  const remove = useDeleteFlow(actions, (id) => `/api/admin/chapters?id=${id}`, 'Chapter deleted');
+  const [items, setItems] = useState<AdminChapter[]>(chapters);
+  const [query, setQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'ALL' | 'ACTIVE' | 'INACTIVE'>('ALL');
+  const [editing, setEditing] = useState<AdminChapter | null>(null);
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    setItems(chapters);
+  }, [chapters]);
+
+  const visible = useMemo(
+    () =>
+      items.filter((ch) => {
+        if (statusFilter === 'ACTIVE' && !ch.isActive) return false;
+        if (statusFilter === 'INACTIVE' && ch.isActive) return false;
+        return matches(query, ch.name, ch.city, ch.region, ch.country, ch.meetingCadence);
+      }),
+    [items, query, statusFilter],
+  );
+
+  async function save(payload: Record<string, unknown>, method: 'POST' | 'PATCH') {
+    const res = await actions.run({
+      id: 'chapter-form',
+      url: '/api/admin/chapters',
+      method,
+      body: payload,
+      success: method === 'POST' ? 'Chapter added to radar' : 'Chapter updated',
+      successBody: String(payload.name ?? editing?.name ?? ''),
+      silent: true,
+    });
+
+    if (res.ok) {
+      if (method === 'PATCH' && editing) {
+        setItems((prev) =>
+          prev.map((c) => (c.id === editing.id ? ({ ...c, ...payload } as AdminChapter) : c)),
+        );
+      } else {
+        router.refresh();
+      }
+    }
+    return res.ok ? null : res.error;
+  }
+
+  async function toggleActive(ch: AdminChapter) {
+    await actions.run({
+      id: ch.id,
+      url: '/api/admin/chapters',
+      method: 'PATCH',
+      body: { id: ch.id, isActive: !ch.isActive },
+      success: ch.isActive ? 'Chapter deactivated' : 'Chapter activated',
+      successBody: ch.name,
+    });
+    setItems((prev) => prev.map((item) => (item.id === ch.id ? { ...item, isActive: !item.isActive } : item)));
+  }
+
+  async function confirmDelete() {
+    const id = remove.target?.id;
+    await remove.confirm();
+    if (id) setItems((prev) => prev.filter((c) => c.id !== id));
+  }
+
+  return (
+    <div>
+      <PanelHead
+        kicker="🌐 Global Chapter Radar"
+        title="Regional Chapters Management"
+        blurb="Create, edit, toggle and plot chapters on the Global Chapter Radar. City coordinates automatically geocode and plot on the radar globe."
+        tone="violet"
+        action={
+          <Button
+            tone="lime"
+            onClick={() => {
+              setEditing(null);
+              setOpen(true);
+            }}
+          >
+            + New chapter
+          </Button>
+        }
+      />
+
+      <ErrorBanner key={actions.error ?? 'clear'} message={actions.error} onDismiss={actions.clearError} />
+
+      <Toolbar>
+        <div className="flex-1">
+          <label htmlFor="ch-search" className="sr-only">
+            Search chapters
+          </label>
+          <Input
+            id="ch-search"
+            type="search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Chapter name, city, region, country…"
+          />
+        </div>
+        <div className="flex gap-2">
+          <FilterChip active={statusFilter === 'ALL'} onClick={() => setStatusFilter('ALL')}>
+            All ({items.length})
+          </FilterChip>
+          <FilterChip active={statusFilter === 'ACTIVE'} onClick={() => setStatusFilter('ACTIVE')}>
+            Active ({items.filter((i) => i.isActive).length})
+          </FilterChip>
+          <FilterChip active={statusFilter === 'INACTIVE'} onClick={() => setStatusFilter('INACTIVE')}>
+            Inactive ({items.filter((i) => !i.isActive).length})
+          </FilterChip>
+        </div>
+      </Toolbar>
+
+      {visible.length === 0 ? (
+        <EmptyState
+          title={items.length === 0 ? 'No chapters found' : 'Nothing matches that'}
+          blurb={
+            items.length === 0
+              ? 'Click + New Chapter above to add your first regional chapter to the Global Radar.'
+              : 'Try a different search word.'
+          }
+          action={
+            items.length === 0 ? (
+              <Button
+                tone="lime"
+                onClick={() => {
+                  setEditing(null);
+                  setOpen(true);
+                }}
+              >
+                + Create first chapter
+              </Button>
+            ) : undefined
+          }
+        />
+      ) : (
+        <ul className="space-y-3">
+          {visible.map((ch) => {
+            const busy = actions.busyId === ch.id;
+            return (
+              <Row key={ch.id} className={cn(!ch.isActive && 'opacity-60 bg-surface-inset/50')}>
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-center">
+                  <div className="flex min-w-0 flex-1 items-center gap-3">
+                    <span className="flex h-12 w-12 flex-shrink-0 items-center justify-center border border-line bg-cyan/15 text-2xl shadow-panel">
+                      {ch.emoji || '🌐'}
+                    </span>
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2 mb-1">
+                        <p className="truncate text-base font-extrabold text-white">{ch.name}</p>
+                        <Chip tone={ch.isActive ? 'lime' : 'paper'} size="sm">
+                          {ch.isActive ? 'Active on Radar' : 'Inactive'}
+                        </Chip>
+                        <Chip tone="cobalt" size="sm">
+                          {ch.meetingCadence}
+                        </Chip>
+                      </div>
+                      <p className="truncate text-xs text-ink-muted">
+                        📍 {ch.city}, {ch.country} · Region: {ch.region}
+                      </p>
+                      <p className="mt-0.5 truncate font-mono text-[10px] uppercase tracking-[0.12em] text-cyan font-bold">
+                        Coordinates: {ch.latitude !== null && ch.longitude !== null ? `${ch.latitude}° N, ${ch.longitude}° W` : 'Auto-Geocoded'}
+                      </p>
+                    </div>
+                  </div>
+
+                  <RowActions>
+                    <Button href={`/chapters/${ch.slug}`} tone="paper" size="sm">
+                      View
+                    </Button>
+                    <Button
+                      tone={ch.isActive ? 'tangerine' : 'lime'}
+                      size="sm"
+                      disabled={busy}
+                      onClick={() => toggleActive(ch)}
+                    >
+                      {ch.isActive ? 'Deactivate' : 'Activate'}
+                    </Button>
+                    <Button
+                      tone="violet"
+                      size="sm"
+                      disabled={busy}
+                      onClick={() => {
+                        setEditing(ch);
+                        setOpen(true);
+                      }}
+                    >
+                      Edit
+                    </Button>
+                    <Button tone="magenta" size="sm" disabled={busy} onClick={() => remove.ask(ch.id, ch.name)}>
+                      Delete
+                    </Button>
+                  </RowActions>
+                </div>
+              </Row>
+            );
+          })}
+        </ul>
+      )}
+
+      <ChapterModal
+        open={open}
+        editing={editing}
+        pending={actions.busyId === 'chapter-form'}
+        onClose={() => setOpen(false)}
+        onSave={save}
+      />
+
+      <ConfirmDelete
+        target={remove.target}
+        what="chapter"
+        cascade="Members attached to this chapter will lose their regional chapter link."
+        pending={remove.pending}
+        error={remove.error}
+        onClose={remove.close}
+        onConfirm={confirmDelete}
+      />
+    </div>
+  );
+}
+
+/* ========================================================================== */
 /* Shell  */
 /* ========================================================================== */
 
@@ -3913,6 +4379,7 @@ export function AdminClient({
   posts,
   resources,
   leads,
+  chapters = [],
 }: {
   adminEmail: string;
   adminUserId: string;
@@ -3926,6 +4393,7 @@ export function AdminClient({
   posts: AdminPost[];
   resources: AdminResource[];
   leads: AdminLead[];
+  chapters?: AdminChapter[];
 }) {
   const [tab, setTab] = useState<TabKey>('overview');
 
@@ -3939,6 +4407,7 @@ export function AdminClient({
     requests: pendingRequestsCount,
     members: counts.members,
     events: counts.events,
+    chapters: counts.chapters,
     opportunities: counts.opportunities,
     applications: counts.applications,
     partners: sponsors.length,
@@ -3958,8 +4427,8 @@ export function AdminClient({
   return (
     <div>
       {/* ==================================================================
- HEADER
- ================================================================== */}
+  HEADER
+  ================================================================== */}
       <section className="relative overflow-hidden border-b border-line bg-surface-inset text-ink">
         <div className="absolute inset-0 mesh-dots opacity-25" aria-hidden />
 
@@ -4035,8 +4504,8 @@ export function AdminClient({
       />
 
       {/* ==================================================================
- CONSOLE
- ================================================================== */}
+  CONSOLE
+  ================================================================== */}
       <section className="border-b border-line bg-base">
         <div className="mx-auto max-w-container-max px-4 lg:px-10">
           <div className="lg:grid lg:grid-cols-[220px_minmax(0,1fr)] lg:gap-8">
@@ -4111,6 +4580,7 @@ export function AdminClient({
               {tab === 'requests' && <AccessRequestsPanel members={members} adminUserId={adminUserId} />}
               {tab === 'members' && <MembersPanel members={members} adminUserId={adminUserId} />}
               {tab === 'events' && <EventsPanel events={events} />}
+              {tab === 'chapters' && <ChaptersPanel chapters={chapters} />}
               {tab === 'opportunities' && <OpportunitiesPanel opportunities={opportunities} />}
               {tab === 'applications' && <ApplicationsPanel applications={applications} />}
               {tab === 'partners' && <PartnersPanel sponsors={sponsors} />}

@@ -25,7 +25,8 @@ import { ShieldDoodle, CurlyArrowDoodle, ScribbleUnderline, PodcastMicDoodle, Br
 import { SecurityVisionGrid } from '@/components/ui/security-vision';
 import { YouTubePlayer } from '@/components/ui/youtube-player';
 
-export const revalidate = 30;
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 const TIER_LABEL: Record<string, string> = {
   DIAMOND: 'Diamond partner',
@@ -516,7 +517,7 @@ export default async function HomePage() {
           <Reveal delay={0.1}>
             <div className="mt-12 grid grid-cols-1 gap-8 items-center lg:grid-cols-12">
               <div className="lg:col-span-6">
-                <GlobalSecurityRadar />
+                <GlobalSecurityRadar chapters={chapters} />
               </div>
               <div className="lg:col-span-6 border border-line bg-surface/90 p-8 rounded-2xl shadow-panel backdrop-blur-xl">
                 <span className="kicker mb-3">Real-Time Connectivity</span>

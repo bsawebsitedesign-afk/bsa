@@ -5,9 +5,13 @@ const globalForPrisma = global as unknown as { prisma: PrismaClient };
 function getDatabaseUrl() {
   let url = process.env.DATABASE_URL || '';
   if (url && (url.startsWith('postgres://') || url.startsWith('postgresql://'))) {
+    const sep = url.includes('?') ? '&' : '?';
+    if (url.includes(':6543') && !url.includes('pgbouncer=')) {
+      url = `${url}${sep}pgbouncer=true`;
+    }
     if (!url.includes('sslmode=')) {
-      const sep = url.includes('?') ? '&' : '?';
-      url = `${url}${sep}sslmode=require`;
+      const currentSep = url.includes('?') ? '&' : '?';
+      url = `${url}${currentSep}sslmode=require`;
     }
   }
   return url;
@@ -21,7 +25,7 @@ export const prisma =
         url: getDatabaseUrl(),
       },
     },
-    log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
+    log: ['error', 'warn'],
   });
 
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;

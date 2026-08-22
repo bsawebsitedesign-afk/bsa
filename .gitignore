@@ -30,3 +30,7 @@ yarn-error.log*
 *.pem
 .idea
 .vscode
+
+# AI Agent Folders
+.claude/
+.agents/

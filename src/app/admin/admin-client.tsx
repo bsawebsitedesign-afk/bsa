@@ -2333,7 +2333,7 @@ function MembersPanel({
   const remove = useDeleteFlow(actions, (id) => `/api/admin/members?id=${id}`, 'Member deleted');
   const [query, setQuery] = useState('');
   const [sort, setSort] = useState<'newest' | 'name' | 'org'>('newest');
-  const [statusFilter, setStatusFilter] = useState<'ALL' | 'ACTIVE' | 'REVOKED'>('ALL');
+  const [statusFilter, setStatusFilter] = useState<'ACTIVE' | 'REVOKED' | 'ALL'>('ACTIVE');
 
   // Strictly exclude PENDING applicants from the Members directory section
   const confirmedMembers = useMemo(() => members.filter((m) => m.status !== 'PENDING'), [members]);

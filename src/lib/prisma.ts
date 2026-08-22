@@ -11,7 +11,13 @@ function getDatabaseUrl() {
     }
     if (!url.includes('connection_limit=')) {
       const currentSep = url.includes('?') ? '&' : '?';
-      url = `${url}${currentSep}connection_limit=1`;
+      url = `${url}${currentSep}connection_limit=10`;
+    } else {
+      url = url.replace(/connection_limit=1(?!\d)/, 'connection_limit=10');
+    }
+    if (!url.includes('pool_timeout=')) {
+      const currentSep = url.includes('?') ? '&' : '?';
+      url = `${url}${currentSep}pool_timeout=20`;
     }
     if (!url.includes('sslmode=')) {
       const currentSep = url.includes('?') ? '&' : '?';

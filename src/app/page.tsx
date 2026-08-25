@@ -294,20 +294,24 @@ export default async function HomePage() {
                   </div>
                 </Reveal>
 
-                <h1 className="relative mt-8 tracking-tight font-extrabold uppercase leading-[0.88]">
+                <h1 className="relative mt-8 tracking-tight font-extrabold uppercase leading-[0.9]">
                   <ShieldDoodle className="absolute -left-12 -top-10 h-16 w-16 text-cyan/70 hidden sm:block rotate-[-12deg]" />
                   <span className="relative inline-block text-4xl sm:text-6xl lg:text-7xl font-extrabold text-3d-pop tracking-tight">
-                    CONNECTING PEOPLE,
-                    <span className="absolute -right-6 -top-4 text-cyan text-2xl animate-pulse">✦</span>
+                    BUSINESS SECURITY
                   </span>
-                  <span className="relative block text-4xl sm:text-6xl lg:text-7xl font-accent font-bold lowercase italic text-3d-pop-cyan -mt-3 sm:-mt-5 lg:-mt-7 rotate-[-2.5deg] drop-shadow-[0_10px_25px_rgba(0,0,0,0.8)]">
-                    product & technology with business!
-                    <span className="absolute -left-6 bottom-2 text-white text-3xl animate-bounce">✦</span>
+                  <span className="relative block text-4xl sm:text-6xl lg:text-7xl font-extrabold text-3d-pop-cyan mt-1 sm:mt-2 tracking-tight">
+                    ALLIANCE
+                    <span className="absolute -right-6 -top-4 text-cyan text-2xl animate-pulse">✦</span>
                   </span>
                 </h1>
 
+                <p className="relative mt-4 text-2xl sm:text-3xl lg:text-4xl font-accent font-bold lowercase italic text-cyan-bright drop-shadow-[0_10px_25px_rgba(0,0,0,0.8)] rotate-[-1.5deg]">
+                  connecting people, product & technology with business!
+                  <span className="inline-block ml-2 text-white text-2xl animate-bounce">✦</span>
+                </p>
+
                 <Reveal direction="up" delay={0.9}>
-                  <p className="mt-8 max-w-xl border-l-2 border-cyan/40 pl-5 text-base sm:text-lg font-semibold leading-relaxed text-white/90">
+                  <p className="mt-6 max-w-xl border-l-2 border-cyan/40 pl-5 text-base sm:text-lg font-semibold leading-relaxed text-white/90">
                     Where security leaders connect to network & grow more business.{' '}
                     <strong className="font-extrabold text-white">
                       Empowering CEOs, CISOs, integrators & manufacturers across Physical, Electronic, and Cybersecurity.

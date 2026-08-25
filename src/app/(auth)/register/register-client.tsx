@@ -200,7 +200,7 @@ export function RegisterClient() {
           icon="⏳"
           badgeTone="amber"
           badgeText="PENDING ADMIN ACTIVATION"
-          title="Welcome to BSA Network!"
+          title="Welcome to Business Security Alliance!"
           subtitle="Your account registration request has been submitted to executive administration for verification."
           details={[
             { label: 'Name', value: fullName },

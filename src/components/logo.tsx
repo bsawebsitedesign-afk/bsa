@@ -39,12 +39,18 @@ export function Logo({
       <LogoMark className="h-8 w-8 flex-shrink-0" title="Business Security Alliance" />
       {showWord && (
         <span className="flex flex-col leading-none">
-          <span className="font-display text-lg font-bold tracking-tight text-ink group-hover:text-cyan transition-colors">
-            BSA
+          <span
+            className="font-display text-sm sm:text-base font-extrabold tracking-tight group-hover:text-cyan transition-colors whitespace-nowrap"
+            style={{ color: '#ffffff' }}
+          >
+            Business Security Alliance
           </span>
           {subtitle && (
-            <span className="mt-1 font-mono text-[0.5625rem] uppercase tracking-[0.18em] text-ink-muted">
-              Business Security Alliance
+            <span
+              className="mt-1 font-mono text-[0.5625rem] uppercase tracking-[0.18em]"
+              style={{ color: '#94a3b8' }}
+            >
+              Professional Industry Network
             </span>
           )}
         </span>

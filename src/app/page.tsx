@@ -14,10 +14,10 @@ import { EmptyState, SectionHead, Stat, Sticker } from '@/components/ui/misc';
 import { formatDay, formatMonth, parseList, relativeTime } from '@/lib/utils';
 
 import { FigureStrip, HeroCopy } from '@/components/hero-bits';
-// Statically imported rather than lazily: behind a dynamic() the strike beat
-// starts a second or more after the headline has finished, and the two halves of
-// the opening decorrelate. It is a client island either way.
-import { HeroForge } from '@/components/hero-forge';
+// Statically imported rather than lazily: behind a dynamic() the room starts
+// arriving a second or more after the headline has finished, and the two halves
+// of the opening decorrelate. It is a client island either way.
+import { HeroNetwork } from '@/components/hero-network';
 import { ScrollJourney } from '@/components/journey/scroll-journey';
 import { GlobalSecurityRadar } from '@/components/ui/radar';
 import { SecurityPassportForge } from '@/components/ui/passport-forge';
@@ -257,26 +257,26 @@ export default async function HomePage() {
       {/* ==================================================================
  HERO
 
- No background grid, and nothing tiled: the whole right of the frame is
- one object. The official medallion is read as a relief map and rebuilt
- as several thousand points of metal in real three-dimensional space,
- struck from the centre outward, lit by a light the reader moves with
- the pointer, orbited by the chapters, and pulled apart again under
- scroll. Layout stays deliberately off-centre - the type holds the left
- seven columns, the coin owns the right five, and the figures run along
- a ruled baseline rather than sitting in a row of boxes.
+ No background grid, and nothing tiled: the frame is a room of members.
+ Figures arrive from off-screen, drift, link to whoever they are near -
+ recomputed live, so the mesh is never the same twice - pass
+ introductions along those links, part around the pointer, and disperse
+ under scroll. Layout stays deliberately off-centre: the type holds the
+ left seven columns and the room thins out beneath it, so the crowd
+ owns the right of the frame and the figures run along a ruled baseline
+ rather than sitting in a row of boxes.
  ================================================================== */}
       <section data-hero-stage className="relative min-h-[180dvh] border-b border-line">
-        {/* Pinned for the length of the runway, so the medallion visibly comes
+        {/* Pinned for the length of the runway, so the room visibly comes
  apart on screen instead of scrolling away mid-animation. */}
         <div className="sticky top-0 flex h-[100dvh] flex-col overflow-hidden">
           <div className="aura-hero absolute inset-0" aria-hidden />
-          <HeroForge className="absolute inset-0 h-full w-full" chapterCount={chapterCount} memberCount={memberCount} />
-          {/* Below lg the medallion is behind the copy rather than beside it,
- so the type gets a scrim. Above lg there is nothing to scrim: the
- coin owns the right of the frame and the words own the left. */}
+          <HeroNetwork className="absolute inset-0 h-full w-full" chapterCount={chapterCount} memberCount={memberCount} />
+          {/* Below lg the room is behind the copy rather than beside it, so
+ the type gets a scrim. Above lg there is nothing to scrim: the
+ network thins out on the left and the words own it. */}
           <div
-            className="pointer-events-none absolute inset-0 bg-gradient-to-b from-base/75 via-base/45 to-base/80 lg:hidden"
+            className="pointer-events-none absolute inset-0 bg-gradient-to-b from-base/60 via-base/25 to-base/70 lg:hidden"
             aria-hidden
           />
           <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-grad-fade" aria-hidden />
@@ -284,7 +284,7 @@ export default async function HomePage() {
           <HeroCopy className="relative mx-auto flex w-full max-w-container-max flex-1 flex-col justify-center px-5 py-20 lg:px-8">
             <div className="grid grid-cols-1 gap-14 lg:grid-cols-12">
               <div className="lg:col-span-7">
-                {/* Timed to land as the mark locks onto its vertices */}
+                {/* Timed to land as the room finishes arriving */}
                 <Reveal direction="down" delay={0.35}>
                   <div className="glass-chip gap-2.5 rounded-full border-cyan/40 px-4 py-1.5">
                     <LiveDot tone="cyan" />

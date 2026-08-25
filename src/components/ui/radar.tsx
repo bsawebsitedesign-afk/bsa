@@ -174,6 +174,21 @@ export function GlobalSecurityRadar({
     let animId: number;
     let angle = 0;
 
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    // The radar sits a long way down a 14,000px page. Without this it kept
+    // sweeping at 60fps the whole time the reader was anywhere else on the
+    // site, which is where the scroll jank was coming from.
+    let visible = false;
+
+    // The sweep wedge is always the same wedge - only its rotation changes, and
+    // the context can be rotated instead. Rebuilding it per frame allocated a
+    // gradient object every 16ms.
+    const sweep = ctx.createConicGradient(0, 0, 0);
+    sweep.addColorStop(0, 'rgba(6, 182, 212, 0.42)');
+    sweep.addColorStop(0.12, 'rgba(6, 182, 212, 0.08)');
+    sweep.addColorStop(0.28, 'rgba(6, 182, 212, 0.0)');
+    sweep.addColorStop(1, 'rgba(6, 182, 212, 0.0)');
+
     const render = () => {
       const width = canvas.width;
       const height = canvas.height;
@@ -215,27 +230,31 @@ export function GlobalSecurityRadar({
 
       // Rotating Radar Beam (Conic Gradient)
       const sweepAngle = (angle * Math.PI) / 180;
-      const grad = ctx.createConicGradient(sweepAngle, center, center);
-      grad.addColorStop(0, 'rgba(6, 182, 212, 0.42)');
-      grad.addColorStop(0.12, 'rgba(6, 182, 212, 0.08)');
-      grad.addColorStop(0.28, 'rgba(6, 182, 212, 0.0)');
-      grad.addColorStop(1, 'rgba(6, 182, 212, 0.0)');
-
-      ctx.fillStyle = grad;
+      ctx.save();
+      ctx.translate(center, center);
+      ctx.rotate(sweepAngle);
+      ctx.fillStyle = sweep;
       ctx.beginPath();
-      ctx.arc(center, center, radius, 0, Math.PI * 2);
+      ctx.arc(0, 0, radius, 0, Math.PI * 2);
       ctx.fill();
+      ctx.restore();
 
-      // Leading Radar Sweep Line
-      ctx.strokeStyle = '#00F0FF';
-      ctx.lineWidth = 2;
-      ctx.shadowColor = '#00F0FF';
-      ctx.shadowBlur = 8;
+      // Leading Radar Sweep Line. Two strokes rather than a shadow: a canvas
+      // shadow is a real blur pass, and this one ran every frame.
+      const sx = center + radius * Math.cos(sweepAngle);
+      const sy = center + radius * Math.sin(sweepAngle);
+      ctx.strokeStyle = 'rgba(0, 240, 255, 0.22)';
+      ctx.lineWidth = 5;
       ctx.beginPath();
       ctx.moveTo(center, center);
-      ctx.lineTo(center + radius * Math.cos(sweepAngle), center + radius * Math.sin(sweepAngle));
+      ctx.lineTo(sx, sy);
       ctx.stroke();
-      ctx.shadowBlur = 0;
+      ctx.strokeStyle = '#00F0FF';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(center, center);
+      ctx.lineTo(sx, sy);
+      ctx.stroke();
 
       // First Pass: Calculate Screen Positions of Nodes
       const nodesWithPos = displayChapters.map((ch) => {
@@ -262,14 +281,16 @@ export function GlobalSecurityRadar({
         ctx.arc(x, y, isSelected ? 8 : 6, 0, Math.PI * 2);
         ctx.stroke();
 
-        // Pulsing Solid Core
+        // Halo, then core. Same read as a shadow at a fraction of the cost.
+        ctx.fillStyle = isSelected ? 'rgba(0, 240, 255, 0.28)' : 'rgba(34, 211, 238, 0.16)';
+        ctx.beginPath();
+        ctx.arc(x, y, isSelected ? 10 : 6.5, 0, Math.PI * 2);
+        ctx.fill();
+
         ctx.fillStyle = isSelected ? '#00F0FF' : isHover ? '#C6F432' : '#22D3EE';
-        ctx.shadowColor = isSelected ? '#00F0FF' : '#22D3EE';
-        ctx.shadowBlur = isSelected ? 14 : 4;
         ctx.beginPath();
         ctx.arc(x, y, isSelected ? 4 : 3, 0, Math.PI * 2);
         ctx.fill();
-        ctx.shadowBlur = 0;
       });
 
       // Second Pass: De-conflicted Label Placement with Dark Pill Backgrounds & Leader Lines
@@ -361,11 +382,28 @@ export function GlobalSecurityRadar({
       });
 
       angle = (angle + 1.2) % 360;
-      animId = requestAnimationFrame(render);
+      if (visible && !reduced) animId = requestAnimationFrame(render);
     };
 
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        const now = entry?.isIntersecting ?? true;
+        if (now === visible) return;
+        visible = now;
+        cancelAnimationFrame(animId);
+        if (visible && !reduced) animId = requestAnimationFrame(render);
+      },
+      { threshold: 0 },
+    );
+    observer.observe(canvas);
+
+    // One frame regardless, so the radar is never blank before it is reached.
     render();
-    return () => cancelAnimationFrame(animId);
+
+    return () => {
+      cancelAnimationFrame(animId);
+      observer.disconnect();
+    };
   }, [activeChapter, hovered, displayChapters]);
 
   return (

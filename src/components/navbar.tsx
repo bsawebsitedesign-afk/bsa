@@ -188,7 +188,10 @@ export function Navbar({ session }: { session: NavSession | null }) {
         className={cn(
           'sticky top-0 z-50 rounded-none border-x-0 border-t-0 transition-all duration-500',
           lifted
-            ? 'border-b border-cyan/30 bg-[#0B0F19]/95 backdrop-blur-2xl shadow-[0_4px_30px_rgba(0,0,0,0.6)]'
+            // No blur once lifted: at 95% opaque there is nothing behind it to
+            // see, and a full-width 64px backdrop blur is re-rasterised on every
+            // scroll frame - paying for an effect that cannot be perceived.
+            ? 'border-b border-cyan/30 bg-[#0B0F19]/95 shadow-[0_4px_30px_rgba(0,0,0,0.6)]'
             : 'border-b border-line/60 bg-[#0B0F19]/80 backdrop-blur-xl shadow-panel',
         )}
       >

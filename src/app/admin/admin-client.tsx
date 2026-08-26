@@ -366,7 +366,7 @@ function pretty(value: string): string {
 /* Mutation plumbing  */
 /* ========================================================================== */
 
-type RunResult = { ok: true } | { ok: false; error: string };
+type RunResult<T = any> = { ok: true; data?: T } | { ok: false; error: string };
 
 interface RunOptions {
   /** Row id (or a form key) so exactly one control shows a pending state. */
@@ -384,7 +384,7 @@ interface AdminActions {
   busyId: string | null;
   error: string | null;
   clearError: () => void;
-  run: (opts: RunOptions) => Promise<RunResult>;
+  run: <T = any>(opts: RunOptions) => Promise<RunResult<T>>;
 }
 
 function useAdminActions(): AdminActions {
@@ -394,7 +394,7 @@ function useAdminActions(): AdminActions {
   const [error, setError] = useState<string | null>(null);
 
   const run = useCallback(
-    async (opts: RunOptions): Promise<RunResult> => {
+    async <T = any,>(opts: RunOptions): Promise<RunResult<T>> => {
       setBusyId(opts.id);
       if (!opts.silent) setError(null);
 
@@ -404,7 +404,7 @@ function useAdminActions(): AdminActions {
           headers: { 'Content-Type': 'application/json' },
           ...(opts.body !== undefined ? { body: JSON.stringify(opts.body) } : {}),
         });
-        const data = (await res.json()) as { ok?: boolean; error?: string };
+        const data = (await res.json()) as { ok?: boolean; error?: string; [key: string]: any };
 
         if (!res.ok || !data.ok) {
           const message = data.error ?? 'That did not go through. Try again.';
@@ -415,7 +415,7 @@ function useAdminActions(): AdminActions {
 
         toast.success(opts.success, opts.successBody);
         router.refresh();
-        return { ok: true };
+        return { ok: true, data: data as T };
       } catch {
         const message = 'The request never landed. Check your connection and try again.';
         if (!opts.silent) setError(message);
@@ -969,6 +969,8 @@ function EventModal({
           <Field label="Capacity" htmlFor="ev-capacity" required>
             <Input
               id="ev-capacity"
+              name="maxCapacity"
+              autoComplete="off"
               type="number"
               min={1}
               max={100000}
@@ -1042,6 +1044,8 @@ function EventModal({
             <Field label="Price" htmlFor="ev-price" hint="0 = free">
               <Input
                 id="ev-price"
+                name="ticketPrice"
+                autoComplete="off"
                 type="number"
                 min={0}
                 step="1"
@@ -2667,18 +2671,62 @@ function EventsPanel({ events }: { events: AdminEvent[] }) {
     });
 
     if (res.ok) {
-      if (method === 'PATCH' && editing) {
+      if (res.data?.event) {
+        const ev = res.data.event;
+        const formatted: AdminEvent = {
+          id: ev.id,
+          slug: ev.slug,
+          title: ev.title,
+          description: ev.description ?? '',
+          fullDetails: ev.fullDetails ?? '',
+          category: ev.category ?? 'ROUNDTABLE',
+          eventDate: ev.eventDate ? new Date(ev.eventDate).toISOString() : new Date().toISOString(),
+          startTime: ev.startTime ?? '',
+          endTime: ev.endTime ?? '',
+          location: ev.location ?? '',
+          locationType: ev.locationType ?? 'IN_PERSON',
+          venueName: ev.venueName ?? null,
+          maxCapacity: Number(ev.maxCapacity ?? 0),
+          isPaid: Boolean(ev.isPaid),
+          status: ev.status ?? 'UPCOMING',
+          heroImageUrl: ev.heroImageUrl ?? null,
+          cpdHours: Number(ev.cpdHours ?? 0),
+          registrations: ev._count?.registrations ?? 0,
+          ticketName: ev.tickets?.[0]?.name ?? 'Member Registration',
+          ticketPrice: Number(ev.tickets?.[0]?.price ?? 0),
+          ticketCurrency: ev.tickets?.[0]?.currency ?? 'USD',
+        };
+        setItems((prev) => {
+          const exists = prev.some((e) => e.id === formatted.id);
+          if (exists) {
+            return prev.map((e) => (e.id === formatted.id ? { ...e, ...formatted } : e));
+          }
+          return [formatted, ...prev];
+        });
+      } else if (method === 'PATCH' && editing) {
         setItems((prev) =>
           prev.map((e) => {
             if (e.id !== editing.id) return e;
             const updatedPrice = payload.ticketPrice !== undefined ? Number(payload.ticketPrice) : e.ticketPrice;
+            const updatedCap = payload.maxCapacity !== undefined ? Number(payload.maxCapacity) : e.maxCapacity;
+            const updatedCpd = payload.cpdHours !== undefined ? Number(payload.cpdHours) : e.cpdHours;
             return {
               ...e,
-              ...payload,
+              ...(payload.title !== undefined ? { title: String(payload.title) } : {}),
+              ...(payload.description !== undefined ? { description: String(payload.description) } : {}),
+              ...(payload.fullDetails !== undefined ? { fullDetails: String(payload.fullDetails) } : {}),
+              ...(payload.category !== undefined ? { category: String(payload.category) } : {}),
+              ...(payload.location !== undefined ? { location: String(payload.location) } : {}),
+              ...(payload.locationType !== undefined ? { locationType: String(payload.locationType) } : {}),
+              ...(payload.venueName !== undefined ? { venueName: String(payload.venueName) } : {}),
+              ...(payload.eventDate !== undefined ? { eventDate: String(payload.eventDate) } : {}),
+              ...(payload.startTime !== undefined ? { startTime: String(payload.startTime) } : {}),
+              ...(payload.endTime !== undefined ? { endTime: String(payload.endTime) } : {}),
+              ...(payload.status !== undefined ? { status: String(payload.status) } : {}),
               ticketPrice: updatedPrice,
               isPaid: updatedPrice > 0,
-              cpdHours: payload.cpdHours !== undefined ? Number(payload.cpdHours) : e.cpdHours,
-              maxCapacity: payload.maxCapacity !== undefined ? Number(payload.maxCapacity) : e.maxCapacity,
+              cpdHours: updatedCpd,
+              maxCapacity: updatedCap,
             } as AdminEvent;
           }),
         );

@@ -64,28 +64,26 @@ export const PATCH = route(async (req) => {
   const existing = await prisma.event.findUnique({ where: { id }, select: { id: true, title: true } });
   if (!existing) throw new ApiError('Event not found.', 404);
 
-  // Update underlying ticket price / name first if provided
-  if (ticketPrice !== undefined || ticketName !== undefined) {
-    const existingTicket = await prisma.eventTicket.findFirst({ where: { eventId: id } });
-    if (existingTicket) {
-      await prisma.eventTicket.update({
-        where: { id: existingTicket.id },
-        data: {
-          ...(ticketPrice !== undefined ? { price: ticketPrice } : {}),
-          ...(ticketName !== undefined ? { name: ticketName } : {}),
-        },
-      });
-    } else if (ticketPrice !== undefined) {
-      await prisma.eventTicket.create({
-        data: {
-          eventId: id,
-          name: ticketName || 'Standard Entry',
-          price: ticketPrice,
-          currency: 'USD',
-          quantityAvailable: fields.maxCapacity ?? 100,
-        },
-      });
-    }
+  // Ensure ticket record exists and update price/name if provided
+  let existingTicket = await prisma.eventTicket.findFirst({ where: { eventId: id } });
+  if (!existingTicket) {
+    await prisma.eventTicket.create({
+      data: {
+        eventId: id,
+        name: ticketName || 'Standard Entry',
+        price: ticketPrice !== undefined ? ticketPrice : 0,
+        currency: 'USD',
+        quantityAvailable: fields.maxCapacity ?? 100,
+      },
+    });
+  } else if (ticketPrice !== undefined || ticketName !== undefined) {
+    await prisma.eventTicket.update({
+      where: { id: existingTicket.id },
+      data: {
+        ...(ticketPrice !== undefined ? { price: ticketPrice } : {}),
+        ...(ticketName !== undefined ? { name: ticketName } : {}),
+      },
+    });
   }
 
   const event = await prisma.event.update({

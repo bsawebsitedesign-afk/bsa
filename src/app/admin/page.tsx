@@ -310,29 +310,33 @@ export default async function AdminPage() {
     hasProfile: Boolean(row.profile),
   }));
 
-  const events: AdminEvent[] = eventRows.map((row) => ({
-    id: row.id,
-    slug: row.slug,
-    title: row.title,
-    description: row.description ?? '',
-    fullDetails: row.fullDetails ?? '',
-    category: row.category ?? 'ROUNDTABLE',
-    eventDate: row.eventDate ? new Date(row.eventDate).toISOString() : new Date().toISOString(),
-    startTime: row.startTime ?? '',
-    endTime: row.endTime ?? '',
-    location: row.location ?? '',
-    locationType: row.locationType ?? 'IN_PERSON',
-    venueName: row.venueName ?? null,
-    maxCapacity: row.maxCapacity ?? 0,
-    isPaid: row.isPaid ?? false,
-    status: row.status ?? 'UPCOMING',
-    heroImageUrl: row.heroImageUrl ?? null,
-    cpdHours: row.cpdHours ?? 0,
-    registrations: row._count?.registrations ?? 0,
-    ticketName: row.tickets?.[0]?.name ?? 'Member Registration',
-    ticketPrice: row.tickets?.[0]?.price ?? 0,
-    ticketCurrency: row.tickets?.[0]?.currency ?? 'USD',
-  }));
+  const events: AdminEvent[] = eventRows.map((row) => {
+    const ticket = row.tickets?.[0];
+    const ticketPrice = ticket ? ticket.price : (row.isPaid ? 49 : 0);
+    return {
+      id: row.id,
+      slug: row.slug,
+      title: row.title,
+      description: row.description ?? '',
+      fullDetails: row.fullDetails ?? '',
+      category: row.category ?? 'ROUNDTABLE',
+      eventDate: row.eventDate ? new Date(row.eventDate).toISOString() : new Date().toISOString(),
+      startTime: row.startTime ?? '',
+      endTime: row.endTime ?? '',
+      location: row.location ?? '',
+      locationType: row.locationType ?? 'IN_PERSON',
+      venueName: row.venueName ?? null,
+      maxCapacity: row.maxCapacity ?? 0,
+      isPaid: row.isPaid ?? ticketPrice > 0,
+      status: row.status ?? 'UPCOMING',
+      heroImageUrl: row.heroImageUrl ?? null,
+      cpdHours: row.cpdHours ?? 0,
+      registrations: row._count?.registrations ?? 0,
+      ticketName: ticket?.name ?? 'Member Registration',
+      ticketPrice,
+      ticketCurrency: ticket?.currency ?? 'USD',
+    };
+  });
 
   const opportunities: AdminOpportunity[] = opportunityRows.map((row) => ({
     id: row.id,

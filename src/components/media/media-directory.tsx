@@ -183,7 +183,7 @@ export function MediaDirectory({ onSelectUrl, selectLabel = 'Use as Thumbnail', 
             <select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
-              className="rounded border border-line bg-surface px-3 py-1.5 font-mono text-xs text-ink focus:border-cyan focus:outline-none"
+              className="min-h-[44px] rounded border border-line bg-surface px-3 py-1.5 font-mono text-xs text-ink focus:border-cyan focus:outline-none"
             >
               <option value="EVENT_THUMBNAIL">Event Thumbnail</option>
               <option value="COVER_IMAGE">Cover Image / Banner</option>

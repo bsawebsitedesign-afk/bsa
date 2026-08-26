@@ -76,7 +76,7 @@ function FilterPill({
       onClick={onClick}
       aria-pressed={active}
       className={cn(
-        'flex shrink-0 items-center gap-1.5 border border-line px-3 py-1.5 font-mono text-[10px] font-bold uppercase tracking-[0.14em] transition-[transform,box-shadow,background-color,color] duration-100',
+        'flex min-h-[44px] shrink-0 items-center gap-1.5 border border-line px-3 font-mono text-[10px] font-bold uppercase tracking-[0.14em] transition-[transform,box-shadow,background-color,color] duration-100',
         active
           ? 'bg-surface-inset text-ink shadow-panel'
           : 'bg-surface text-ink-muted hover:-translate-x-[2px] hover:-translate-y-[2px] hover:text-ink hover:shadow-panel',
@@ -322,7 +322,7 @@ export function EventsClient({ events }: { events: EventCard[] }) {
  FILTERS + UPCOMING
  ================================================================ */}
       <section className="border-b border-line bg-surface">
-        <div className="sticky top-[71px] z-30 border-b border-line bg-surface/95 backdrop-saturate-100">
+        <div className="sticky top-[71px] z-30 border-b border-line bg-surface/95">
           <div className="mx-auto max-w-container-max px-4 py-3 lg:px-10">
             <div className="flex items-center gap-3">
               <span className="hidden shrink-0 font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-ink-muted lg:block">

@@ -618,7 +618,11 @@ export function Navbar({ session }: { session: NavSession | null }) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 top-[72px] z-40 h-[calc(100dvh-72px)] overflow-y-auto bg-base/95 backdrop-blur-2xl border-t border-line/60 lg:hidden"
+            // Opaque, not frosted: it covers the whole screen, so there is
+            // nothing behind it worth seeing - and a full-viewport backdrop
+            // blur is the most expensive thing a phone can be asked to
+            // composite, for an effect nobody can look at.
+            className="fixed inset-0 top-[72px] z-40 h-[calc(100dvh-72px)] overflow-y-auto border-t border-line/60 bg-base lg:hidden"
           >
             <div className="pointer-events-none absolute inset-0 mesh-dots opacity-30" aria-hidden />
             <nav className="relative flex flex-col p-5">
@@ -721,7 +725,7 @@ export function Navbar({ session }: { session: NavSession | null }) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-[#0B0F19]/95 backdrop-blur-2xl p-6 text-center"
+            className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-[#0B0F19] p-6 text-center"
           >
             <div className="relative mb-6 flex h-20 w-20 items-center justify-center rounded-2xl border border-cyan/40 bg-surface shadow-glow-cyan">
               <div className="absolute inset-0 rounded-2xl border border-cyan animate-ping opacity-25" />

@@ -510,7 +510,7 @@ export function GlobalSecurityRadar({
               onClick={() => setActiveChapter(ch)}
               onMouseEnter={() => setHovered(ch)}
               onMouseLeave={() => setHovered(null)}
-              className={`flex items-center gap-1.5 rounded-full border px-3 py-1 font-mono text-xs font-bold transition-all duration-200 cursor-pointer ${
+              className={`flex min-h-[44px] cursor-pointer items-center gap-1.5 rounded-full border px-3 py-1 font-mono text-xs font-bold transition-all duration-200 ${
                 isSelected
                   ? 'border-cyan bg-cyan/25 text-white shadow-[0_0_12px_rgba(6,182,212,0.4)] scale-105'
                   : 'border-white/15 bg-white/5 text-white/80 hover:border-cyan/50 hover:bg-white/10 hover:text-white'

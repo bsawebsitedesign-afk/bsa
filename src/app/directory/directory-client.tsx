@@ -478,7 +478,7 @@ export function DirectoryClient({
                     aria-pressed={view === option}
                     onClick={() => setView(option)}
                     className={cn(
-                      'px-3 py-1.5 font-mono text-[10px] font-bold uppercase tracking-[0.14em] transition-colors',
+                      'inline-flex min-h-[44px] items-center px-3 font-mono text-[10px] font-bold uppercase tracking-[0.14em] transition-colors',
                       view === option ? 'bg-surface-inset text-ink' : 'text-ink-muted hover:bg-surface-inset',
                     )}
                   >
@@ -612,11 +612,22 @@ function MemberCard({ member, index }: { member: DirectoryMember; index: number 
   const extra = Math.max(0, member.specialties.length - specialties.length);
 
   return (
-    <Link
-      href={`/members/${member.handle}`}
+    // Not a <Link> wrapping the card: the Chat button inside is a link too, and
+    // an anchor inside an anchor is invalid HTML the parser unnests - so the
+    // client tree never matched the server tree, hydration failed, and React
+    // threw the whole server render away and rebuilt the page on the client.
+    // The card is a plain box with a stretched overlay link for the pass, which
+    // is the same whole-card hit area with one anchor per destination.
+    <div
       className="group relative flex h-full animate-fade-up flex-col overflow-hidden rounded-2xl border border-line bg-surface/90 shadow-panel transition-all duration-300 hover:border-cyan/70 hover:bg-surface-raised"
       style={{ animationDelay: `${Math.min(index, 11) * 35}ms` }}
     >
+      <Link
+        href={`/members/${member.handle}`}
+        aria-label={`${member.fullName} - open security pass`}
+        className="absolute inset-0 z-0 rounded-2xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan"
+      />
+
       {/* Top Security ID Pass Lanyard Header */}
       <div className="flex items-center justify-between border-b border-line bg-base/90 px-4 py-2.5 font-mono text-xs font-bold uppercase tracking-[0.14em]">
         <div className="flex items-center gap-2">
@@ -664,10 +675,10 @@ function MemberCard({ member, index }: { member: DirectoryMember; index: number 
             <Availability member={member} />
           </div>
           <div className="flex items-center gap-2">
+            {/* Above the stretched link, so it keeps its own destination. */}
             <Link
               href={`/community?dm=${member.userId}`}
-              onClick={(e) => e.stopPropagation()}
-              className="rounded bg-cyan/20 px-2.5 py-1 font-mono text-[10px] font-bold text-cyan border border-cyan/40 hover:bg-cyan hover:text-white transition-colors"
+              className="relative z-10 inline-flex min-h-[44px] items-center rounded border border-cyan/40 bg-cyan/20 px-2.5 font-mono text-[10px] font-bold text-cyan transition-colors hover:bg-cyan hover:text-white"
             >
               💬 Chat
             </Link>
@@ -680,7 +691,7 @@ function MemberCard({ member, index }: { member: DirectoryMember; index: number 
           </div>
         </div>
       </div>
-    </Link>
+    </div>
   );
 }
 

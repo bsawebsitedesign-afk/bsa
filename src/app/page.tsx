@@ -266,19 +266,27 @@ export default async function HomePage() {
  owns the right of the frame and the figures run along a ruled baseline
  rather than sitting in a row of boxes.
  ================================================================== */}
-      <section data-hero-stage className="relative min-h-[180dvh] border-b border-line">
-        {/* Pinned for the length of the runway, so the room visibly comes
- apart on screen instead of scrolling away mid-animation. */}
-        <div className="sticky top-0 flex h-[100dvh] flex-col overflow-hidden">
+      <section data-hero-stage className="relative border-b border-line lg:min-h-[180dvh]">
+        {/* Pinned for the length of the runway above lg, so the room visibly
+ comes apart on screen instead of scrolling away mid-animation.
+
+ Below lg it is a plain section that grows to its content. The copy
+ on a phone is roughly 1130px tall against a 670px viewport, so a
+ clipped 100dvh box swallowed everything under the first button -
+ the figure strip was never on screen at all - and pinning it meant
+ the scroll-out faded both the copy and the room to nothing while
+ the section was still holding the viewport, leaving a blank screen
+ where the hero had been. There is no runway on a phone worth
+ spending a screen and a half of scroll on. */}
+        <div className="relative flex min-h-[100dvh] flex-col overflow-hidden lg:sticky lg:top-0 lg:h-[100dvh]">
           <div className="aura-hero absolute inset-0" aria-hidden />
           <HeroNetwork className="absolute inset-0 h-full w-full" chapterCount={chapterCount} memberCount={memberCount} />
           {/* Below lg the room is behind the copy rather than beside it, so
- the type gets a scrim. Above lg there is nothing to scrim: the
- network thins out on the left and the words own it. */}
-          <div
-            className="pointer-events-none absolute inset-0 bg-gradient-to-b from-base/60 via-base/25 to-base/70 lg:hidden"
-            aria-hidden
-          />
+ the type gets a scrim - flat, because the copy now runs the whole
+ height and there is no band for a gradient to line up with. Above
+ lg there is nothing to scrim: the network thins out on the left
+ and the words own it. */}
+          <div className="pointer-events-none absolute inset-0 bg-base/45 lg:hidden" aria-hidden />
           <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-grad-fade" aria-hidden />
 
           <HeroCopy className="relative mx-auto flex w-full max-w-container-max flex-1 flex-col justify-center px-5 py-20 lg:px-8">
@@ -301,7 +309,7 @@ export default async function HomePage() {
                   </span>
                   <span className="relative block text-4xl sm:text-6xl lg:text-7xl font-extrabold text-3d-pop-cyan mt-1 sm:mt-2 tracking-tight">
                     ALLIANCE
-                    <span className="absolute -right-6 -top-4 text-cyan text-2xl animate-pulse">✦</span>
+                    <span className="absolute -right-1 -top-4 text-cyan text-2xl animate-pulse sm:-right-6">✦</span>
                   </span>
                 </h1>
 

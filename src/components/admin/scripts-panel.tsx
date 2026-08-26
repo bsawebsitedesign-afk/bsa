@@ -220,7 +220,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             <select
               value={selectedPage}
               onChange={(e) => setSelectedPage(e.target.value)}
-              className="w-full rounded-xl border border-line-bright bg-surface p-2.5 font-sans text-xs font-semibold text-white focus:border-cyan focus:outline-none"
+              className="min-h-[44px] w-full rounded-xl border border-line-bright bg-surface p-2.5 font-sans text-xs font-semibold text-white focus:border-cyan focus:outline-none"
             >
               {PRESET_PAGES.map((p) => (
                 <option key={p.value} value={p.value} className="bg-surface text-white">

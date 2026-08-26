@@ -509,6 +509,55 @@
   }
 }
 
+/* --------------------------------------------------------------------------
+   Small screens get the same fallback, for a different reason.
+
+   `backdrop-filter` puts every element carrying it into its own composited
+   layer, and the layer's backdrop is re-sampled and re-blurred on every frame
+   the page moves. There are over a hundred frosted surfaces on this site; a
+   desktop GPU absorbs that and a phone does not - it is the single largest
+   cause of the scroll stutter on a handset, and none of it is perceptible at
+   arm's length on a 6-inch screen anyway.
+
+   Nothing is lost. Every glass surface here is a panel first and frosted
+   second, so the layout, the hairline and the contrast are all unchanged -
+   this is the same substitution the block above already makes.
+   -------------------------------------------------------------------------- */
+
+@media (max-width: 1023px) {
+  .glass,
+  .glass-panel,
+  .glass-chip {
+    background-color: rgb(var(--surface-raised));
+    background-image: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  .glass-morphism,
+  .glass-card-executive {
+    background: rgb(var(--surface-raised));
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  /* The utilities are always paired with a near-opaque fill at their call
+     sites (bg-surface/90, bg-base/95), so dropping the blur leaves the
+     surface reading the same. */
+  .backdrop-blur-sm,
+  .backdrop-blur,
+  .backdrop-blur-md,
+  .backdrop-blur-lg,
+  .backdrop-blur-xl,
+  .backdrop-blur-2xl,
+  .backdrop-blur-3xl,
+  .panel-glass,
+  [data-glass] {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}
+
 /* ==========================================================================
    Utilities - geometry, texture and scroll behaviour
    ========================================================================== */

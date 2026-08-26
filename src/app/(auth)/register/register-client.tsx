@@ -19,6 +19,7 @@ import {
   ShieldCheck,
   Check,
 } from '@phosphor-icons/react';
+import { Select } from '@/components/ui/field';
 import { ConfirmationModal } from '@/components/ui/confirmation-modal';
 import { useToast } from '@/components/ui/toast';
 import { cn, slugify } from '@/lib/utils';
@@ -453,19 +454,19 @@ export function RegisterClient() {
               <ShieldCheck className="h-4 w-4 text-cyan" />
               Industry Role Category
             </label>
-            <select
+            <Select
               id="reg-stage"
               name="memberType"
               value={memberType}
               onChange={(event) => setMemberType(event.target.value)}
-              className="w-full rounded-2xl border border-cyan/30 bg-[#111726]/90 px-4 py-3.5 font-sans text-xs font-bold text-white outline-none transition-all duration-300 focus:border-cyan focus:shadow-[0_0_20px_rgba(6,182,212,0.3)] hover:border-cyan/50"
+              className="w-full rounded-2xl border-cyan/30 bg-[#111726]/90 px-4 font-sans text-xs font-bold text-white duration-300 hover:border-cyan/50 focus:border-cyan focus:shadow-[0_0_20px_rgba(6,182,212,0.3)]"
             >
               {MEMBER_TYPES.map((option) => (
                 <option key={option.value} value={option.value} className="bg-[#0B0F19] text-white">
                   {option.label}
                 </option>
               ))}
-            </select>
+            </Select>
           </div>
         </div>
 

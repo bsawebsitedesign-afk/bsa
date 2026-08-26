@@ -43,6 +43,12 @@ export function HeroCopy({ children, className }: { children: React.ReactNode; c
     if (!stage) return;
 
     const measure = () => {
+      // Below lg the stage is not pinned, so there is no runway: the hero
+      // scrolls away on its own and clearing the copy on the way past just
+      // leaves a blank screen behind it. Park the range out of reach - the
+      // same sentinel the pre-measurement state uses - and nothing moves.
+      if (window.innerWidth < 1024) return setRange([0, 1e6]);
+
       const top = stage.getBoundingClientRect().top + window.scrollY;
       const runway = Math.max(1, stage.offsetHeight - window.innerHeight);
       setRange([top, top + runway]);

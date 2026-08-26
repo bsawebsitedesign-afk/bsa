@@ -186,7 +186,7 @@ export function LoginClient({ redirectTo }: { redirectTo: string | null }) {
             </label>
             <Link
               href="/forgot-password"
-              className="font-mono text-[10px] font-bold uppercase tracking-wider text-cyan hover:text-cyan-bright transition-colors"
+              className="-my-3 inline-flex min-h-[44px] items-center py-3 font-mono text-[10px] font-bold uppercase tracking-wider text-cyan transition-colors hover:text-cyan-bright"
             >
               Forgot Password?
             </Link>

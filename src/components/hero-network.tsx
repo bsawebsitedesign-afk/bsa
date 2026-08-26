@@ -103,6 +103,7 @@ export function HeroNetwork({
     if (!ctx) return;
 
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const fine = window.matchMedia('(pointer: fine)').matches;
 
     const stage = (canvas.closest('[data-hero-stage]') as HTMLElement | null) ?? canvas;
     const host = (canvas.parentElement as HTMLElement | null) ?? canvas;
@@ -135,7 +136,10 @@ export function HeroNetwork({
       const rect = canvas!.getBoundingClientRect();
       const nextW = Math.max(1, rect.width);
       const nextH = Math.max(1, rect.height);
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      // A phone renders this full-bleed behind the whole hero. At dpr 2 that is
+      // four times the fill for strokes a thumb's width from the glass, and it
+      // is the single biggest thing this costs on a handset.
+      const dpr = Math.min(window.devicePixelRatio || 1, nextW < 640 ? 1.5 : 2);
 
       const widthStable = built && Math.abs(nextW - width) < 2;
       width = nextW;
@@ -150,23 +154,31 @@ export function HeroNetwork({
       CYAN = token('--cyan-bright', CYAN);
       SURFACE = token('--surface', SURFACE);
 
-      // Figure size and reach come off the short side, so the room keeps the
-      // same physical spacing on a phone and on a 27-inch monitor instead of
-      // scaling into either confetti or beach balls.
+      // Figure size comes off the short side, so the room keeps the same
+      // physical scale on a phone and on a 27-inch monitor instead of scaling
+      // into either confetti or beach balls.
       const short = Math.min(width, height);
       const base = Math.max(11, Math.min(20, short / 42));
-      // Reach is deliberately generous. A mesh you have to look for is not a
-      // network, it is a starfield: links have to be the first thing read.
-      linkDist = Math.max(170, Math.min(320, short / 2.4));
-
-      // A height-only change is the iOS URL bar collapsing; keep the room.
-      if (widthStable && !force) return;
 
       // Density per area rather than per breakpoint. The membership only ever
-      // nudges it: this is a hero, not a chart.
+      // nudges it: this is a hero, not a chart. A phone is capped harder than
+      // the area alone would give, because every figure is six filled paths and
+      // fill rate is what a handset runs out of first.
       const target = Math.round((width * height) / 21000 + Math.sqrt(memberCount));
-      const count = Math.max(14, Math.min(64, target));
+      const count = Math.max(14, Math.min(width < 640 ? 26 : 64, target));
       const hubs = Math.max(2, Math.min(6, Math.round(chapterCount / 2)));
+
+      // Reach is deliberately generous. A mesh you have to look for is not a
+      // network, it is a starfield: links have to be the first thing read. It
+      // comes off the room's own spacing rather than the short side, because a
+      // phone's frame is tall and narrow - keyed to the short side there, whole
+      // rows of figures sat unlinked and the hero read as an empty plate.
+      // A height-only change is the iOS URL bar collapsing; keep the room - but
+      // the reach still has to follow the frame it is now covering.
+      const keep = widthStable && !force;
+      const spaced = Math.sqrt((width * height) / Math.max(1, keep ? members.length : count));
+      linkDist = Math.max(180, Math.min(340, spaced * 1.9));
+      if (keep) return;
 
       // Jittered grid rather than pure random: random alone clumps, and a clump
       // of figures reads as a smudge instead of as people.
@@ -255,18 +267,31 @@ export function HeroNetwork({
      * The copy has to stay readable over the top of a live drawing, and a scrim
      * dark enough to guarantee that on its own would flatten the room. So the
      * crowd thins where the words are instead: above lg the copy holds the left
-     * seven columns, and below lg it holds a band across the middle.
+     * seven columns and the room owns the right.
+     *
+     * Below lg there is no such split. The hero is no longer a clipped 100dvh
+     * box there, so the copy runs its full height and there is no band left to
+     * thin - the old middle-band cut held the room at 0.3 behind a scrim, which
+     * is why the animation read as nothing at all on a phone. The room stays up
+     * everywhere instead and the scrim over it carries the type.
      */
     function guard(x: number, y: number) {
       if (width >= 1024) return 0.12 + 0.88 * clamp01((x - width * 0.26) / (width * 0.34));
-      const band = Math.abs(y / Math.max(1, height) - 0.5) / 0.26;
-      return 0.3 + 0.7 * clamp01(band);
+      return 0.8;
     }
 
     function update(elapsed: number) {
-      const stageRect = stage.getBoundingClientRect();
-      const runway = Math.max(1, stageRect.height - window.innerHeight);
-      scrollT = clamp01(-stageRect.top / runway);
+      // The stage is pinned above lg only. Below it the hero scrolls away like
+      // any other section, so there is no runway to scrub: reading the stage's
+      // rect every frame would be a forced layout for nothing, and dispersing
+      // the room on the way past left a blank screen where the hero had been.
+      if (width >= 1024) {
+        const stageRect = stage.getBoundingClientRect();
+        const runway = Math.max(1, stageRect.height - window.innerHeight);
+        scrollT = clamp01(-stageRect.top / runway);
+      } else {
+        scrollT = 0;
+      }
 
       const arrive = reduced ? 1 : clamp01(elapsed / ARRIVE_MS);
       const weave = reduced ? 1 : easeOutCubic(clamp01((elapsed - ARRIVE_MS * 0.55) / WEAVE_MS));
@@ -322,16 +347,24 @@ export function HeroNetwork({
         }
       }
 
-      return { weave, fade: 1 - scrollT * 0.9 };
+      // Down to 0.45, not to nothing. At 0.1 the last stretch of the runway was
+      // a pinned viewport with an empty plate in it - the room had gone and the
+      // copy had already cleared, so the reader got a blank screen before the
+      // section let go. Holding the room up means the frame the hero releases
+      // on still reads as a room coming apart rather than as a missing section.
+      return { weave, fade: 1 - scrollT * 0.55 };
     }
 
     /** Someone within reach of `i`, so introductions travel real links. */
     function neighbour(i: number) {
       let best = -1;
       let seen = 0;
+      const reach2 = (linkDist * 1.15) ** 2;
       for (let j = 0; j < members.length; j++) {
         if (j === i) continue;
-        if (Math.hypot(px[j] - px[i], py[j] - py[i]) > linkDist * 1.15) continue;
+        const dx = px[j] - px[i];
+        const dy = py[j] - py[i];
+        if (dx * dx + dy * dy > reach2) continue;
         seen++;
         // Reservoir pick: one pass, no array.
         if (Math.random() < 1 / seen) best = j;
@@ -380,12 +413,17 @@ export function HeroNetwork({
       //      alive because the room is moving.
       // ponytail: O(n^2) pair scan, capped at 64 figures - grid buckets only
       // if the density ever goes past a few hundred.
+      // `Math.hypot` is overflow-safe and correspondingly slow, and this is the
+      // hottest line on the page. Most pairs are out of reach, so they are
+      // rejected on the squared distance and only survivors pay for a sqrt.
+      const linkDist2 = linkDist * linkDist;
       for (let i = 0; i < members.length; i++) {
         for (let j = i + 1; j < members.length; j++) {
           const dx = px[j] - px[i];
           const dy = py[j] - py[i];
-          const d = Math.hypot(dx, dy);
-          if (d > linkDist) continue;
+          const d2 = dx * dx + dy * dy;
+          if (d2 > linkDist2) continue;
+          const d = Math.sqrt(d2);
 
           const strength = 1 - d / linkDist;
           const anchored = members[i].hub || members[j].hub;
@@ -456,8 +494,23 @@ export function HeroNetwork({
 
     /* ----------------------------------------------------------------- loop */
 
+    /**
+     * Phones draw at 30fps.
+     *
+     * Everything here is driven off elapsed time rather than off a frame count,
+     * so the drift and the signals travel at exactly the same speed either way -
+     * the only thing halving costs is the fill, which is the thing a handset
+     * runs out of. On a desktop the loop is left alone.
+     */
+    let lastFrame = 0;
+
     function step(now: number) {
       if (!started) started = now;
+      if (width < 640 && now - lastFrame < 32) {
+        if (!reduced && visible) frame = requestAnimationFrame(step);
+        return;
+      }
+      lastFrame = now;
       draw(now - started);
       if (!reduced && visible) frame = requestAnimationFrame(step);
     }
@@ -509,10 +562,13 @@ export function HeroNetwork({
     if (reduced) {
       draw(ARRIVE_MS + WEAVE_MS);
     } else {
-      // Touch fires pointermove too; `pointerleave` is what parks the lens
-      // again once the finger lifts.
-      host.addEventListener('pointermove', onPointerMove);
-      host.addEventListener('pointerleave', onPointerLeave);
+      // Only where there is something to part the crowd with. On touch,
+      // `pointermove` fires all the way through a scroll drag, so the lens
+      // shoved the room around every time the reader flicked the page.
+      if (fine) {
+        host.addEventListener('pointermove', onPointerMove);
+        host.addEventListener('pointerleave', onPointerLeave);
+      }
       start();
     }
 

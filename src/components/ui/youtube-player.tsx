@@ -93,7 +93,7 @@ export function YouTubePlayer({
               <button
                 type="button"
                 onClick={() => setPlaying(true)}
-                className="inline-flex items-center gap-1.5 rounded-xl bg-magenta px-4 py-2 font-mono text-xs font-black uppercase tracking-wider text-white shadow-panel transition-all hover:bg-magenta/90 hover:scale-105"
+                className="inline-flex min-h-[44px] items-center gap-1.5 rounded-xl bg-magenta px-4 py-2 font-mono text-xs font-black uppercase tracking-wider text-white shadow-panel transition-all hover:bg-magenta/90 hover:scale-105"
               >
                 ▶ Play Video Right Here
               </button>

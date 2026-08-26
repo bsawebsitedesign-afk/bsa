@@ -79,12 +79,16 @@ export function Footer() {
           {COLUMNS.map((column) => (
             <div key={column.title}>
               <h3 className="kicker mb-5">{column.title}</h3>
-              <ul className="space-y-3">
+              {/* The gap moved into the links themselves: at 20px tall with a
+                  12px gap these were both small and close together, which is the
+                  combination that makes a footer unusable with a thumb. Same
+                  pitch down the column, twice the target. */}
+              <ul>
                 {column.links.map((link) => (
                   <li key={link.href}>
                     <Link
                       href={link.href}
-                      className="group inline-flex items-center gap-2 text-sm text-ink-soft transition-colors hover:text-cyan-bright"
+                      className="group inline-flex min-h-[44px] items-center gap-2 py-1 text-sm text-ink-soft transition-colors hover:text-cyan-bright"
                     >
                       <span aria-hidden className="h-px w-0 bg-cyan transition-all duration-300 group-hover:w-3" />
                       {link.label}
@@ -104,11 +108,17 @@ export function Footer() {
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-4">
-            <Link href="/terms" className="font-mono text-xs font-semibold text-ink-soft hover:text-cyan transition-colors">
+            <Link
+              href="/terms"
+              className="inline-flex min-h-[44px] items-center font-mono text-xs font-semibold text-ink-soft transition-colors hover:text-cyan"
+            >
               Terms of Service
             </Link>
             <span className="text-white/20">·</span>
-            <Link href="/privacy" className="font-mono text-xs font-semibold text-ink-soft hover:text-cyan transition-colors">
+            <Link
+              href="/privacy"
+              className="inline-flex min-h-[44px] items-center font-mono text-xs font-semibold text-ink-soft transition-colors hover:text-cyan"
+            >
               Privacy Policy
             </Link>
             <span className="text-white/20">·</span>

@@ -232,7 +232,7 @@ export function BroadcastsPanel() {
                   <select
                     value={type}
                     onChange={(e) => setType(e.target.value)}
-                    className="w-full rounded-xl border border-white/20 bg-[#0B0F19] px-3.5 py-2.5 font-sans text-xs font-bold text-white focus:border-cyan focus:outline-none transition-colors"
+                    className="min-h-[44px] w-full rounded-xl border border-white/20 bg-[#0B0F19] px-3.5 py-2.5 font-sans text-xs font-bold text-white transition-colors focus:border-cyan focus:outline-none"
                   >
                     <option value="INFO">ℹ️ General Announcement</option>
                     <option value="SUMMIT">🎟️ Summit & Event Notice</option>
@@ -249,7 +249,7 @@ export function BroadcastsPanel() {
                   <select
                     value={targetRole}
                     onChange={(e) => setTargetRole(e.target.value)}
-                    className="w-full rounded-xl border border-white/20 bg-[#0B0F19] px-3.5 py-2.5 font-sans text-xs font-bold text-white focus:border-cyan focus:outline-none transition-colors"
+                    className="min-h-[44px] w-full rounded-xl border border-white/20 bg-[#0B0F19] px-3.5 py-2.5 font-sans text-xs font-bold text-white transition-colors focus:border-cyan focus:outline-none"
                   >
                     <option value="ALL">🌐 All Visitors (Public & Members)</option>
                     <option value="MEMBER">🛡️ Verified Members Only</option>

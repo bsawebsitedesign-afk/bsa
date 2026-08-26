@@ -216,7 +216,10 @@ export function ScrollJourney({
                   <p className="mt-3 max-w-[32rem] text-[1.0625rem] leading-relaxed text-ink-soft">{b.body(counts)}</p>
                   <Link
                     href={b.link.href}
-                    className="pointer-events-auto mt-4 inline-flex items-center gap-1.5 text-sm font-medium text-cyan transition-colors hover:text-cyan-bright"
+                    // The copy box above is a fixed height, so this cannot take
+                    // real space: `py-3 -my-3` grows the hit area and hands the
+                    // layout back exactly what it borrowed.
+                    className="pointer-events-auto -my-3 mt-1 inline-flex items-center gap-1.5 py-3 text-sm font-medium text-cyan transition-colors hover:text-cyan-bright"
                   >
                     {b.link.label}
                     <span aria-hidden>→</span>

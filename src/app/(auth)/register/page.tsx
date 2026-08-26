@@ -258,7 +258,7 @@ export default async function RegisterPage() {
                 </span>
                 <Link
                   href="/directory"
-                  className="font-mono text-xs font-bold text-violet-bright hover:underline"
+                  className="-my-3 inline-flex min-h-[44px] items-center py-3 font-mono text-xs font-bold text-violet-bright hover:underline"
                 >
                   Browse Directory →
                 </Link>

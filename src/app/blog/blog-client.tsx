@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { RevealGroup, RevealItem } from '@/components/ui/reveal';
 import { Avatar, EmptyState } from '@/components/ui/misc';
 import { PhotoFrame } from '@/components/ui/photo';
+import { Select } from '@/components/ui/field';
 import { cn, formatDate } from '@/lib/utils';
 
 export interface FeedPost {
@@ -180,19 +181,18 @@ export function BlogClient({
               </div>
 
               <div className="w-full lg:w-56">
-                <select
+                <Select
                   id="feed-sort"
                   value={sort}
                   onChange={(e) => setSort(e.target.value as SortKey)}
-                  className="w-full rounded-xl border border-white/15 bg-[#111726] px-4 py-3 font-mono text-xs font-bold text-white shadow-inner outline-none transition-all focus:border-cyan focus:ring-1 focus:ring-cyan"
-                  style={{ color: '#FFFFFF' }}
+                  className="w-full rounded-xl border-white/15 bg-[#111726] px-4 font-mono text-xs font-bold text-white shadow-inner focus:border-cyan focus:ring-1 focus:ring-cyan"
                 >
                   {(Object.keys(SORT_LABEL) as SortKey[]).map((key) => (
                     <option key={key} value={key} className="bg-[#0B0F19] text-white">
                       {SORT_LABEL[key]}
                     </option>
                   ))}
-                </select>
+                </Select>
               </div>
             </div>
 

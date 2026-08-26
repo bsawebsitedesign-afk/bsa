@@ -3,7 +3,7 @@ import { revalidatePath } from 'next/cache';
 import { prisma } from '@/lib/prisma';
 import { requireAdmin } from '@/lib/auth';
 import { route, readBody, guard, jsonOk, ApiError } from '@/lib/api';
-import { adminEventSchema } from '@/lib/validation';
+import { adminEventSchema, patchable } from '@/lib/validation';
 import { LIMITS } from '@/lib/rate-limit';
 import { uniqueSlug } from '@/lib/slug';
 
@@ -58,14 +58,16 @@ export const PATCH = route(async (req) => {
   guard(req, 'admin-events', LIMITS.write);
   await requireAdmin();
 
-  const data = await readBody(req, adminEventSchema.partial().extend({ id: z.string().uuid() }));
+  const data = await readBody(req, patchable(adminEventSchema).extend({ id: z.string().uuid() }));
   const { id, ticketName, ticketPrice, ...fields } = data;
 
   const existing = await prisma.event.findUnique({ where: { id }, select: { id: true, title: true } });
   if (!existing) throw new ApiError('Event not found.', 404);
 
-  // Ensure ticket record exists and update price/name if provided
-  let existingTicket = await prisma.eventTicket.findFirst({ where: { eventId: id } });
+  // Ensure the ticket record exists and tracks price/name/capacity.
+  // quantityAvailable is what actually gates registration and drives the public
+  // "seats remaining" count, so it has to follow maxCapacity on every edit.
+  const existingTicket = await prisma.eventTicket.findFirst({ where: { eventId: id } });
   if (!existingTicket) {
     await prisma.eventTicket.create({
       data: {
@@ -76,12 +78,13 @@ export const PATCH = route(async (req) => {
         quantityAvailable: fields.maxCapacity ?? 100,
       },
     });
-  } else if (ticketPrice !== undefined || ticketName !== undefined) {
+  } else if (ticketPrice !== undefined || ticketName !== undefined || fields.maxCapacity !== undefined) {
     await prisma.eventTicket.update({
       where: { id: existingTicket.id },
       data: {
         ...(ticketPrice !== undefined ? { price: ticketPrice } : {}),
         ...(ticketName !== undefined ? { name: ticketName } : {}),
+        ...(fields.maxCapacity !== undefined ? { quantityAvailable: fields.maxCapacity } : {}),
       },
     });
   }

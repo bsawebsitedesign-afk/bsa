@@ -6,6 +6,7 @@ import { route, readBody, guard, jsonOk, ApiError } from '@/lib/api';
 import { LIMITS } from '@/lib/rate-limit';
 import { uniqueSlug } from '@/lib/slug';
 import { lookupCityGeo } from '@/lib/geo';
+import { patchable } from '@/lib/validation';
 
 const chapterSchema = z.object({
   name: z.string().min(2).max(100),
@@ -77,7 +78,7 @@ export const PATCH = route(async (req) => {
   guard(req, 'admin-chapters', LIMITS.write);
   await requireAdmin();
 
-  const patchSchema = chapterSchema.partial().extend({ id: z.string().uuid() });
+  const patchSchema = patchable(chapterSchema).extend({ id: z.string().uuid() });
   const data = await readBody(req, patchSchema);
   const { id, ...fields } = data;
 

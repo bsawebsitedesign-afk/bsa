@@ -289,3 +289,28 @@ export const chatSendSchema = z
     message: 'Type a message or attach an image first.',
     path: ['content'],
   });
+
+/* -------------------------------------------------------------------------- */
+/* PATCH schemas                                                              */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Build the PATCH counterpart of a create schema: every key optional, and only
+ * the keys the client actually sent survive parsing.
+ *
+ * `schema.partial()` alone is NOT enough — Zod keeps each field's `.default()`
+ * inside the optional wrapper, so an absent key parses to its default and then
+ * overwrites the stored row. That is why saving a capacity edit also reset
+ * ticketPrice to 0, status to UPCOMING, cpdHours to 0, and so on. Strip the
+ * defaults first, then make the field optional.
+ */
+export function patchable<T extends z.ZodRawShape>(schema: z.ZodObject<T>) {
+  const shape = Object.fromEntries(
+    Object.entries(schema.shape).map(([key, field]) => {
+      const f = field as z.ZodTypeAny & { def: { type: string; innerType?: z.ZodTypeAny } };
+      return [key, (f.def.type === 'default' ? f.def.innerType! : f).optional()];
+    }),
+  ) as unknown as { [K in keyof T]: z.ZodOptional<T[K] extends z.ZodDefault<infer I> ? I : T[K]> };
+
+  return z.object(shape);
+}

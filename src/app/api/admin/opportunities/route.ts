@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import { requireAdmin } from '@/lib/auth';
 import { route, readBody, guard, jsonOk, ApiError } from '@/lib/api';
-import { adminOpportunitySchema } from '@/lib/validation';
+import { adminOpportunitySchema, patchable } from '@/lib/validation';
 import { LIMITS } from '@/lib/rate-limit';
 import { uniqueSlug } from '@/lib/slug';
 
@@ -26,7 +26,7 @@ export const PATCH = route(async (req) => {
 
   const { id, requirements, ...fields } = await readBody(
     req,
-    adminOpportunitySchema.partial().extend({ id: z.string().uuid() }),
+    patchable(adminOpportunitySchema).extend({ id: z.string().uuid() }),
   );
 
   const opportunity = await prisma.opportunity.update({

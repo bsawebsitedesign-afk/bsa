@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import { requireAdmin } from '@/lib/auth';
 import { route, readBody, guard, jsonOk, ApiError } from '@/lib/api';
-import { adminPostSchema } from '@/lib/validation';
+import { adminPostSchema, patchable } from '@/lib/validation';
 import { LIMITS } from '@/lib/rate-limit';
 import { uniqueSlug } from '@/lib/slug';
 
@@ -24,7 +24,7 @@ export const PATCH = route(async (req) => {
   guard(req, 'admin-posts', LIMITS.write);
   await requireAdmin();
 
-  const { id, tags, ...fields } = await readBody(req, adminPostSchema.partial().extend({ id: z.string().uuid() }));
+  const { id, tags, ...fields } = await readBody(req, patchable(adminPostSchema).extend({ id: z.string().uuid() }));
 
   const existing = await prisma.blogPost.findUnique({ where: { id }, select: { id: true, title: true } });
   if (!existing) throw new ApiError('Post not found.', 404);

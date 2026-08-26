@@ -64,17 +64,7 @@ export const PATCH = route(async (req) => {
   const existing = await prisma.event.findUnique({ where: { id }, select: { id: true, title: true } });
   if (!existing) throw new ApiError('Event not found.', 404);
 
-  const event = await prisma.event.update({
-    where: { id },
-    data: {
-      ...fields,
-      ...(fields.title && fields.title !== existing.title ? { slug: await uniqueSlug('event', fields.title, id) } : {}),
-      ...(ticketPrice !== undefined ? { isPaid: ticketPrice > 0 } : {}),
-    },
-    include: { tickets: true },
-  });
-
-  // Update underlying ticket price / name when edited in Admin Portal
+  // Update underlying ticket price / name first if provided
   if (ticketPrice !== undefined || ticketName !== undefined) {
     const existingTicket = await prisma.eventTicket.findFirst({ where: { eventId: id } });
     if (existingTicket) {
@@ -97,6 +87,19 @@ export const PATCH = route(async (req) => {
       });
     }
   }
+
+  const event = await prisma.event.update({
+    where: { id },
+    data: {
+      ...fields,
+      ...(fields.title && fields.title !== existing.title ? { slug: await uniqueSlug('event', fields.title, id) } : {}),
+      ...(ticketPrice !== undefined ? { isPaid: ticketPrice > 0 } : {}),
+    },
+    include: {
+      tickets: { orderBy: { price: 'asc' } },
+      _count: { select: { registrations: true } },
+    },
+  });
 
   revalidatePath('/events');
   revalidatePath('/events/[slug]', 'page');

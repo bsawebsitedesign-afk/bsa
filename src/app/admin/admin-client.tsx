@@ -2673,32 +2673,46 @@ function EventsPanel({ events }: { events: AdminEvent[] }) {
     if (res.ok) {
       if (res.data?.event) {
         const ev = res.data.event;
-        const formatted: AdminEvent = {
-          id: ev.id,
-          slug: ev.slug,
-          title: ev.title,
-          description: ev.description ?? '',
-          fullDetails: ev.fullDetails ?? '',
-          category: ev.category ?? 'ROUNDTABLE',
-          eventDate: ev.eventDate ? new Date(ev.eventDate).toISOString() : new Date().toISOString(),
-          startTime: ev.startTime ?? '',
-          endTime: ev.endTime ?? '',
-          location: ev.location ?? '',
-          locationType: ev.locationType ?? 'IN_PERSON',
-          venueName: ev.venueName ?? null,
-          maxCapacity: Number(ev.maxCapacity ?? 0),
-          isPaid: Boolean(ev.isPaid),
-          status: ev.status ?? 'UPCOMING',
-          heroImageUrl: ev.heroImageUrl ?? null,
-          cpdHours: Number(ev.cpdHours ?? 0),
-          registrations: ev._count?.registrations ?? 0,
-          ticketName: ev.tickets?.[0]?.name ?? 'Member Registration',
-          ticketPrice: Number(ev.tickets?.[0]?.price ?? 0),
-          ticketCurrency: ev.tickets?.[0]?.currency ?? 'USD',
-        };
         setItems((prev) => {
-          const exists = prev.some((e) => e.id === formatted.id);
-          if (exists) {
+          const existing = prev.find((e) => e.id === ev.id);
+          const hasTicket = Array.isArray(ev.tickets) && ev.tickets.length > 0 && ev.tickets[0].price !== undefined;
+          const ticketPriceVal = hasTicket
+            ? Number(ev.tickets[0].price)
+            : payload.ticketPrice !== undefined
+            ? Number(payload.ticketPrice)
+            : (existing?.ticketPrice ?? 0);
+          const ticketNameVal = hasTicket
+            ? String(ev.tickets[0].name)
+            : payload.ticketName !== undefined
+            ? String(payload.ticketName)
+            : (existing?.ticketName ?? 'Member Registration');
+          const isPaidVal = ticketPriceVal > 0;
+
+          const formatted: AdminEvent = {
+            id: ev.id,
+            slug: ev.slug,
+            title: ev.title,
+            description: ev.description ?? '',
+            fullDetails: ev.fullDetails ?? '',
+            category: ev.category ?? 'ROUNDTABLE',
+            eventDate: ev.eventDate ? new Date(ev.eventDate).toISOString() : (existing?.eventDate ?? new Date().toISOString()),
+            startTime: ev.startTime ?? '',
+            endTime: ev.endTime ?? '',
+            location: ev.location ?? '',
+            locationType: ev.locationType ?? 'IN_PERSON',
+            venueName: ev.venueName ?? null,
+            maxCapacity: ev.maxCapacity !== undefined ? Number(ev.maxCapacity) : (existing?.maxCapacity ?? 0),
+            isPaid: isPaidVal,
+            status: ev.status ?? 'UPCOMING',
+            heroImageUrl: ev.heroImageUrl ?? null,
+            cpdHours: ev.cpdHours !== undefined ? Number(ev.cpdHours) : (existing?.cpdHours ?? 0),
+            registrations: ev._count?.registrations ?? existing?.registrations ?? 0,
+            ticketName: ticketNameVal,
+            ticketPrice: ticketPriceVal,
+            ticketCurrency: ev.tickets?.[0]?.currency ?? existing?.ticketCurrency ?? 'USD',
+          };
+
+          if (existing) {
             return prev.map((e) => (e.id === formatted.id ? { ...e, ...formatted } : e));
           }
           return [formatted, ...prev];

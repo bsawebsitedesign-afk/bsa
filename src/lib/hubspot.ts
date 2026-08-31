@@ -10,7 +10,12 @@ import { env } from './env';
 export interface LeadPayload {
   email: string;
   name?: string;
+  firstName?: string;
+  lastName?: string;
   company?: string;
+  jobTitle?: string;
+  phone?: string;
+  country?: string;
   formType: string;
   message?: string;
   source?: string;
@@ -28,7 +33,8 @@ export async function sendLeadToHubSpot(payload: LeadPayload): Promise<LeadResul
   const formId = '2e72517f-e6e9-4f4e-a980-6bd95168fc04';
 
   try {
-    const [firstName, ...rest] = (payload.name || '').trim().split(/\s+/);
+    const rawName = payload.name || `${payload.firstName || ''} ${payload.lastName || ''}`.trim();
+    const [firstName, ...rest] = rawName.trim().split(/\s+/);
 
     const formattedMessage = `[Inquiry Topic: ${payload.formType}]\n\n${payload.message || ''}`.trim();
 
@@ -42,9 +48,12 @@ export async function sendLeadToHubSpot(payload: LeadPayload): Promise<LeadResul
         body: JSON.stringify({
           properties: {
             email: payload.email,
-            firstname: firstName || '',
-            lastname: rest.join(' '),
+            firstname: firstName || payload.firstName || '',
+            lastname: rest.join(' ') || payload.lastName || '',
             company: payload.company || '',
+            jobtitle: payload.jobTitle || '',
+            phone: payload.phone || '',
+            country: payload.country || '',
             hs_lead_status: 'NEW',
             message: formattedMessage,
             utm_source: payload.source || 'website',
@@ -69,9 +78,12 @@ export async function sendLeadToHubSpot(payload: LeadPayload): Promise<LeadResul
         body: JSON.stringify({
           fields: [
             { name: 'email', value: payload.email },
-            { name: 'firstname', value: firstName || '' },
-            { name: 'lastname', value: rest.join(' ') },
+            { name: 'firstname', value: firstName || payload.firstName || '' },
+            { name: 'lastname', value: rest.join(' ') || payload.lastName || '' },
             { name: 'company', value: payload.company || '' },
+            { name: 'jobtitle', value: payload.jobTitle || '' },
+            { name: 'phone', value: payload.phone || '' },
+            { name: 'country', value: payload.country || '' },
             { name: 'message', value: formattedMessage },
             { name: 'subject', value: payload.formType },
           ],

@@ -31,14 +31,32 @@ const MESSAGE_MAX = 2000;
 const MESSAGE_WARN = 1800;
 
 interface FormState {
-  name: string;
+  firstName: string;
+  lastName: string;
   email: string;
   company: string;
+  jobTitle: string;
+  phone: string;
+  country: string;
   formType: string;
   message: string;
+  agreeCommunications: boolean;
+  agreeDataProcessing: boolean;
 }
 
-const EMPTY: FormState = { name: '', email: '', company: '', formType: 'CONTACT', message: '' };
+const EMPTY: FormState = {
+  firstName: '',
+  lastName: '',
+  email: '',
+  company: '',
+  jobTitle: '',
+  phone: '',
+  country: '',
+  formType: 'CONTACT',
+  message: '',
+  agreeCommunications: true,
+  agreeDataProcessing: true,
+};
 
 export function ContactClient({
   reasons,
@@ -51,7 +69,7 @@ export function ContactClient({
   signedInEmail?: string | null;
 }) {
   const toast = useToast();
-  const [formMode, setFormMode] = useState<'hubspot' | 'native'>('hubspot');
+  const [formMode, setFormMode] = useState<'hubspot' | 'native'>('native');
   const [form, setForm] = useState<FormState>({
     ...EMPTY,
     formType: initialType,
@@ -72,8 +90,6 @@ export function ContactClient({
   const remaining = MESSAGE_MAX - form.message.length;
   const sending = status === 'sending';
 
-  // One live region that never unmounts, so screen readers still hear the
-  // outcome when the whole form is swapped for the success panel.
   const liveMessage =
     status === 'sending'
       ? 'Sending your message.'
@@ -83,15 +99,12 @@ export function ContactClient({
           ? `That did not send. ${topError}`
           : '';
 
-  // The success panel replaces the form, so it can only be scrolled to once it
-  // has actually mounted.
   useEffect(() => {
     if (status === 'done') panelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }, [status]);
 
   function update<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
-    // Clear the inline error the moment someone starts fixing the field.
     setFieldErrors((prev) => {
       if (!prev[key]) return prev;
       const next = { ...prev };
@@ -104,6 +117,11 @@ export function ContactClient({
     event.preventDefault();
     if (sending) return;
 
+    if (!form.agreeDataProcessing) {
+      setTopError('Please confirm consent for storing and processing your personal data to proceed.');
+      return;
+    }
+
     setStatus('sending');
     setTopError(null);
     setFieldErrors({});
@@ -113,9 +131,14 @@ export function ContactClient({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          name: form.name,
+          name: `${form.firstName} ${form.lastName}`.trim() || form.email.split('@')[0],
+          firstName: form.firstName,
+          lastName: form.lastName,
           email: form.email,
           company: form.company,
+          jobTitle: form.jobTitle,
+          phone: form.phone,
+          country: form.country,
           message: form.message,
           formType: form.formType,
           source: 'contact-page',
@@ -177,8 +200,7 @@ export function ContactClient({
         <p className="mt-4 text-sm leading-relaxed text-ink-soft">
           Your message is in the inbox a real person opens, not a ticket queue that closes itself after 30 days. Expect
           a reply at <strong className="font-bold">{form.email}</strong> within{' '}
-          <strong className="text-cyan px-0.5 font-bold">{sentAs?.reply ?? 'two working days'}</strong>. If it takes
-          longer than that, send it again - nobody here is ignoring you, the inbox is just staffed by volunteers.
+          <strong className="text-cyan px-0.5 font-bold">{sentAs?.reply ?? 'two working days'}</strong>.
         </p>
 
         <div className="mt-6 grid grid-cols-1 gap-3 border-t border-dashed border-line pt-5 sm:grid-cols-2">
@@ -191,10 +213,6 @@ export function ContactClient({
             Send another message
           </Button>
         </div>
-
-        <p className="mt-5 font-mono text-[10px] uppercase leading-relaxed tracking-[0.14em] text-ink-muted">
-          In the meantime, the member directory and events calendar are open to browse.
-        </p>
       </div>
     </div>
   );
@@ -210,15 +228,19 @@ export function ContactClient({
           <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-cyan/15 text-cyan border border-cyan/30 text-sm font-bold">
             ✉️
           </span>
-          <span className="text-base font-extrabold text-white">Send an Enquiry</span>
+          <span className="text-base font-extrabold text-white">We'd love to hear from you!</span>
         </div>
         <span className="rounded-full bg-cyan/15 border border-cyan/40 px-3 py-1 font-mono text-xs font-bold text-cyan flex items-center gap-1.5">
           <span className="h-2 w-2 rounded-full bg-cyan animate-pulse" />
-          {sending ? 'Sending message…' : 'Direct Executive Line'}
+          {sending ? 'Sending message…' : 'Executive Direct Line'}
         </span>
       </div>
 
       <div className="space-y-6 p-6 sm:p-8">
+        <p className="text-xs text-ink-muted leading-relaxed font-medium">
+          Please fill out the form below and an executive representative will get back to you as soon as possible.
+        </p>
+
         {/* Reason first - it changes what the rest of the form asks for. */}
         <div>
           <Label htmlFor="contact-reason" required hint="Direct routing">
@@ -251,30 +273,88 @@ export function ContactClient({
           )}
         </div>
 
+        {/* First & Last Name */}
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
           <div>
-            <Label htmlFor="contact-name" required>
-              Your name
+            <Label htmlFor="contact-firstname" required>
+              First Name
             </Label>
             <Input
-              id="contact-name"
-              name="name"
-              value={form.name}
-              autoComplete="name"
-              placeholder="Kwame Asante"
-              maxLength={80}
+              id="contact-firstname"
+              name="firstName"
+              value={form.firstName}
+              autoComplete="given-name"
+              placeholder="Kwame"
+              maxLength={40}
               invalid={Boolean(fieldErrors.name)}
-              aria-invalid={Boolean(fieldErrors.name)}
-              onChange={(event) => update('name', event.target.value)}
+              onChange={(event) => update('firstName', event.target.value)}
               disabled={sending}
               className="rounded-xl border border-line bg-base px-4 py-3 text-sm text-white placeholder:text-ink-muted focus:border-cyan focus:ring-1 focus:ring-cyan"
             />
-            <FieldError>{fieldErrors.name}</FieldError>
           </div>
 
           <div>
+            <Label htmlFor="contact-lastname" required>
+              Last Name
+            </Label>
+            <Input
+              id="contact-lastname"
+              name="lastName"
+              value={form.lastName}
+              autoComplete="family-name"
+              placeholder="Asante"
+              maxLength={40}
+              onChange={(event) => update('lastName', event.target.value)}
+              disabled={sending}
+              className="rounded-xl border border-line bg-base px-4 py-3 text-sm text-white placeholder:text-ink-muted focus:border-cyan focus:ring-1 focus:ring-cyan"
+            />
+          </div>
+        </div>
+
+        {/* Company & Job Title */}
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+          <div>
+            <Label htmlFor="contact-company" required>
+              Company Name
+            </Label>
+            <Input
+              id="contact-company"
+              name="company"
+              value={form.company}
+              autoComplete="organization"
+              placeholder="Meridian Logistics Group"
+              maxLength={100}
+              invalid={Boolean(fieldErrors.company)}
+              onChange={(event) => update('company', event.target.value)}
+              disabled={sending}
+              className="rounded-xl border border-line bg-base px-4 py-3 text-sm text-white placeholder:text-ink-muted focus:border-cyan focus:ring-1 focus:ring-cyan"
+            />
+            <FieldError>{fieldErrors.company}</FieldError>
+          </div>
+
+          <div>
+            <Label htmlFor="contact-jobtitle" hint="Optional">
+              Job Title
+            </Label>
+            <Input
+              id="contact-jobtitle"
+              name="jobTitle"
+              value={form.jobTitle}
+              autoComplete="organization-title"
+              placeholder="Chief Information Security Officer"
+              maxLength={100}
+              onChange={(event) => update('jobTitle', event.target.value)}
+              disabled={sending}
+              className="rounded-xl border border-line bg-base px-4 py-3 text-sm text-white placeholder:text-ink-muted focus:border-cyan focus:ring-1 focus:ring-cyan"
+            />
+          </div>
+        </div>
+
+        {/* Email & Phone */}
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+          <div>
             <Label htmlFor="contact-email" required>
-              Email address
+              Email
             </Label>
             <Input
               id="contact-email"
@@ -285,35 +365,51 @@ export function ContactClient({
               placeholder="you@organisation.com"
               maxLength={160}
               invalid={Boolean(fieldErrors.email)}
-              aria-invalid={Boolean(fieldErrors.email)}
               onChange={(event) => update('email', event.target.value)}
               disabled={sending}
               className="rounded-xl border border-line bg-base px-4 py-3 text-sm text-white placeholder:text-ink-muted focus:border-cyan focus:ring-1 focus:ring-cyan"
             />
             <FieldError>{fieldErrors.email}</FieldError>
           </div>
+
+          <div>
+            <Label htmlFor="contact-phone" hint="Optional">
+              Phone Number
+            </Label>
+            <Input
+              id="contact-phone"
+              name="phone"
+              type="tel"
+              value={form.phone}
+              autoComplete="tel"
+              placeholder="+91 98765 43210"
+              maxLength={30}
+              onChange={(event) => update('phone', event.target.value)}
+              disabled={sending}
+              className="rounded-xl border border-line bg-base px-4 py-3 text-sm text-white placeholder:text-ink-muted focus:border-cyan focus:ring-1 focus:ring-cyan"
+            />
+          </div>
         </div>
 
+        {/* Country / Region */}
         <div>
-          <Label htmlFor="contact-company" hint="Optional">
-            Organisation or company
+          <Label htmlFor="contact-country" hint="Optional">
+            Country/Region
           </Label>
           <Input
-            id="contact-company"
-            name="company"
-            value={form.company}
-            autoComplete="organization"
-            placeholder="Meridian Logistics Group"
-            maxLength={100}
-            invalid={Boolean(fieldErrors.company)}
-            aria-invalid={Boolean(fieldErrors.company)}
-            onChange={(event) => update('company', event.target.value)}
+            id="contact-country"
+            name="country"
+            value={form.country}
+            autoComplete="country-name"
+            placeholder="India / United Kingdom / United States"
+            maxLength={80}
+            onChange={(event) => update('country', event.target.value)}
             disabled={sending}
             className="rounded-xl border border-line bg-base px-4 py-3 text-sm text-white placeholder:text-ink-muted focus:border-cyan focus:ring-1 focus:ring-cyan"
           />
-          <FieldError>{fieldErrors.company}</FieldError>
         </div>
 
+        {/* Message */}
         <div>
           <Label htmlFor="contact-message" required hint="Include any relevant context">
             Message
@@ -321,16 +417,14 @@ export function ContactClient({
           <Textarea
             id="contact-message"
             name="message"
-            rows={6}
+            rows={5}
             value={form.message}
             maxLength={MESSAGE_MAX}
             placeholder={active?.prompt}
             invalid={Boolean(fieldErrors.message)}
-            aria-invalid={Boolean(fieldErrors.message)}
-            aria-describedby="contact-message-count"
             onChange={(event) => update('message', event.target.value)}
             disabled={sending}
-            className="min-h-[160px] rounded-xl border border-line bg-base p-4 text-sm text-white placeholder:text-ink-muted focus:border-cyan focus:ring-1 focus:ring-cyan"
+            className="min-h-[140px] rounded-xl border border-line bg-base p-4 text-sm text-white placeholder:text-ink-muted focus:border-cyan focus:ring-1 focus:ring-cyan"
           />
 
           <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
@@ -345,6 +439,35 @@ export function ContactClient({
               {remaining} character{remaining === 1 ? '' : 's'} left
             </p>
           </div>
+        </div>
+
+        {/* Legal & Privacy Consents matching HubSpot */}
+        <div className="space-y-3 rounded-xl border border-line/60 bg-base/50 p-4 text-xs text-ink-muted">
+          <p className="font-medium text-white/90">
+            By checking the boxes below, you agree to receive communications from Business Security Alliance. You can unsubscribe anytime.
+          </p>
+
+          <label className="flex items-start gap-2.5 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={form.agreeCommunications}
+              onChange={(e) => update('agreeCommunications', e.target.checked)}
+              className="mt-0.5 rounded border-line bg-base text-cyan focus:ring-cyan"
+            />
+            <span>I agree to receive other communications from Business Security Alliance.</span>
+          </label>
+
+          <label className="flex items-start gap-2.5 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={form.agreeDataProcessing}
+              onChange={(e) => update('agreeDataProcessing', e.target.checked)}
+              className="mt-0.5 rounded border-line bg-base text-cyan focus:ring-cyan"
+            />
+            <span>
+              I agree to allow Business Security Alliance to store and process my personal data.<span className="text-cyan">*</span>
+            </span>
+          </label>
         </div>
 
         {/* Honeypot. Real people never see this; bots fill everything in. */}
@@ -375,21 +498,13 @@ export function ContactClient({
 
         <div className="flex flex-col gap-4 border-t border-line/60 pt-6 sm:flex-row sm:items-center sm:justify-between">
           <p className="font-mono text-xs font-semibold text-ink-muted">
-            🔒 Privacy protected · No newsletter opt-ins.
+            🔒 Privacy protected · Encrypted CRM submission.
           </p>
 
           <Button type="submit" tone="lime" size="lg" disabled={sending} className="w-full sm:w-auto rounded-xl px-8 py-3 text-sm font-extrabold">
-            {sending ? 'Sending Message…' : 'Send Message →'}
+            {sending ? 'Sending Message…' : 'Submit →'}
           </Button>
         </div>
-
-        <p className="mt-4 text-xs leading-relaxed text-ink-muted">
-          We keep your message and email so we can reply, and nothing else happens to them. Read the honest version on{' '}
-          <Link href="/membership" className="font-bold text-cyan hover:underline underline-offset-4">
-            the membership page
-          </Link>
-          .
-        </p>
       </div>
     </form>
   );
@@ -411,7 +526,7 @@ export function ContactClient({
         title="Message Received!"
         subtitle="Thank you for contacting Business Security Alliance. An executive representative will review your message and reply promptly."
         details={[
-          { label: 'Sender', value: form.name },
+          { label: 'Sender', value: `${form.firstName} ${form.lastName}`.trim() || form.email },
           { label: 'Email', value: form.email },
           { label: 'Inquiry Topic', value: active?.label ?? 'General Inquiry' },
         ]}

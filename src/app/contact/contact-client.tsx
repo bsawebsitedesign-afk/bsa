@@ -400,7 +400,7 @@ export function ContactClient({
         {liveMessage}
       </div>
 
-      {status === 'done' ? successPanel : <HubspotForm />}
+      {status === 'done' ? successPanel : formPanel}
 
       <ConfirmationModal
         isOpen={status === 'done'}

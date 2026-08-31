@@ -400,47 +400,7 @@ export function ContactClient({
         {liveMessage}
       </div>
 
-      {status === 'done' ? (
-        successPanel
-      ) : (
-        <div className="space-y-5">
-          {/* Form Mode Selector Header */}
-          <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-line bg-surface-inset/80 p-3 px-5 backdrop-blur-md">
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setFormMode('hubspot')}
-                className={cn(
-                  'rounded-xl px-3.5 py-1.5 font-mono text-xs font-bold transition-all',
-                  formMode === 'hubspot'
-                    ? 'border border-cyan/50 bg-cyan/20 text-cyan shadow-[0_0_12px_rgba(6,182,212,0.3)]'
-                    : 'border border-transparent text-white/70 hover:text-white',
-                )}
-              >
-                ⚡ Executive Priority Form
-              </button>
-              <button
-                type="button"
-                onClick={() => setFormMode('native')}
-                className={cn(
-                  'rounded-xl px-3.5 py-1.5 font-mono text-xs font-bold transition-all',
-                  formMode === 'native'
-                    ? 'border border-cyan/50 bg-cyan/20 text-cyan shadow-[0_0_12px_rgba(6,182,212,0.3)]'
-                    : 'border border-transparent text-white/70 hover:text-white',
-                )}
-              >
-                ✉️ Standard Enquiry Form
-              </button>
-            </div>
-            <span className="rounded-full bg-lime/15 border border-lime/40 px-3 py-1 font-mono text-[10px] font-bold text-lime flex items-center gap-1.5">
-              <span className="h-2 w-2 rounded-full bg-lime animate-pulse" />
-              {formMode === 'hubspot' ? 'Priority Routing Active' : 'Direct Executive Line'}
-            </span>
-          </div>
-
-          {formMode === 'hubspot' ? <HubspotForm /> : formPanel}
-        </div>
-      )}
+      {status === 'done' ? successPanel : <HubspotForm />}
 
       <ConfirmationModal
         isOpen={status === 'done'}

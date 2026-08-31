@@ -1,57 +1,31 @@
 'use client';
 
-import React, { useEffect, useRef } from 'react';
-import Script from 'next/script';
+import React from 'react';
 import { cn } from '@/lib/utils';
 
 export interface HubspotFormProps {
   className?: string;
-  portalId?: string;
-  formId?: string;
-  region?: string;
+  shareUrl?: string;
 }
 
 export function HubspotForm({
   className,
-  portalId = '244660178',
-  formId = '2e72517f-e6e9-4f4e-a980-6bd95168fc04',
-  region = 'na2',
+  shareUrl = 'https://41nx02.share-na2.hsforms.com/2LnJRf-bpT06pgGvZUWj8BA',
 }: HubspotFormProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  const initForm = () => {
-    if (typeof window !== 'undefined' && (window as any).hbspt && containerRef.current) {
-      containerRef.current.innerHTML = '';
-      (window as any).hbspt.forms.create({
-        region,
-        portalId,
-        formId,
-        target: `#hs-form-${formId}`,
-      });
-    }
-  };
-
-  useEffect(() => {
-    initForm();
-  }, [formId, portalId, region]);
-
   return (
     <div
       className={cn(
-        'relative w-full rounded-2xl border border-line bg-surface/95 p-6 backdrop-blur-xl shadow-panel-lg sm:p-8',
+        'relative w-full overflow-hidden rounded-2xl border border-line bg-surface/95 shadow-panel-lg',
         className,
       )}
     >
-      <Script
-        src={`https://js-${region}.hsforms.net/forms/embed/${portalId}.js`}
-        strategy="afterInteractive"
-        onLoad={initForm}
-      />
-
-      <div
-        id={`hs-form-${formId}`}
-        ref={containerRef}
-        className="hs-form-frame min-h-[380px] w-full"
+      <iframe
+        src={shareUrl}
+        width="100%"
+        height="680"
+        className="w-full border-0 bg-transparent min-h-[680px]"
+        title="Contact Form"
+        loading="eager"
       />
     </div>
   );

@@ -417,7 +417,7 @@ export function ContactClient({
                     : 'border border-transparent text-white/70 hover:text-white',
                 )}
               >
-                ⚡ HubSpot Executive Form
+                ⚡ Executive Priority Form
               </button>
               <button
                 type="button"
@@ -434,7 +434,7 @@ export function ContactClient({
             </div>
             <span className="rounded-full bg-lime/15 border border-lime/40 px-3 py-1 font-mono text-[10px] font-bold text-lime flex items-center gap-1.5">
               <span className="h-2 w-2 rounded-full bg-lime animate-pulse" />
-              {formMode === 'hubspot' ? 'HubSpot Direct CRM' : 'Direct Executive Line'}
+              {formMode === 'hubspot' ? 'Priority Routing Active' : 'Direct Executive Line'}
             </span>
           </div>
 

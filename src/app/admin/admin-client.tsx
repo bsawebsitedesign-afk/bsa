@@ -3796,6 +3796,17 @@ function LeadsPanel({ leads }: { leads: AdminLead[] }) {
     [leads, query, formType, state],
   );
 
+  async function retryHubspot(lead: AdminLead) {
+    await actions.run({
+      id: lead.id,
+      url: '/api/admin/leads',
+      method: 'PATCH',
+      body: { id: lead.id, retryHubSpot: true },
+      success: 'HubSpot Sync Retried',
+      successBody: lead.name,
+    });
+  }
+
   async function toggleHandled(lead: AdminLead) {
     await actions.run({
       id: lead.id,
@@ -3943,6 +3954,11 @@ function LeadsPanel({ leads }: { leads: AdminLead[] }) {
                       >
                         Reply ↗
                       </Button>
+                      {lead.hubspotStatus !== 'SYNCED' && (
+                        <Button tone="violet" size="sm" disabled={busy} onClick={() => retryHubspot(lead)}>
+                          {busy ? 'Syncing…' : 'Retry HubSpot ⚡'}
+                        </Button>
+                      )}
                       <Button tone="paper" size="sm" disabled={busy} onClick={() => toggleHandled(lead)}>
                         {busy ? 'Working…' : lead.isHandled ? 'Reopen' : 'Mark handled'}
                       </Button>

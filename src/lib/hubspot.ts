@@ -30,6 +30,8 @@ export async function sendLeadToHubSpot(payload: LeadPayload): Promise<LeadResul
   try {
     const [firstName, ...rest] = (payload.name || '').trim().split(/\s+/);
 
+    const formattedMessage = `[Inquiry Topic: ${payload.formType}]\n\n${payload.message || ''}`.trim();
+
     if (env.hubspotApiKey) {
       const res = await fetch('https://api.hubapi.com/crm/v3/objects/contacts', {
         method: 'POST',
@@ -44,9 +46,9 @@ export async function sendLeadToHubSpot(payload: LeadPayload): Promise<LeadResul
             lastname: rest.join(' '),
             company: payload.company || '',
             hs_lead_status: 'NEW',
-            message: payload.message || '',
+            message: formattedMessage,
             utm_source: payload.source || 'website',
-            utm_campaign: payload.campaign || 'bsa_platform',
+            utm_campaign: payload.campaign || payload.formType,
           },
         }),
         signal: AbortSignal.timeout(8000),
@@ -70,7 +72,8 @@ export async function sendLeadToHubSpot(payload: LeadPayload): Promise<LeadResul
             { name: 'firstname', value: firstName || '' },
             { name: 'lastname', value: rest.join(' ') },
             { name: 'company', value: payload.company || '' },
-            { name: 'message', value: payload.message || '' },
+            { name: 'message', value: formattedMessage },
+            { name: 'subject', value: payload.formType },
           ],
           context: {
             pageUri: 'https://businesssecurityalliance.com/contact',
